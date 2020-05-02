@@ -1,0 +1,91 @@
+@import url('./font/iconfont/iconfont.css');
+@import url('./variables.styl');
+@import url('./annimation.styl');
+
+@font-face {
+  font-family: alibaba;
+  src: url('./font/Alibaba-PuHuiTi-Regular.ttf');
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  background: var(--background);
+  font-family: alibaba;
+  text-overflow: ellipsis;
+  user-select none
+}
+
+::-webkit-scrollbar {
+  width: 5px;
+  position: fixed;
+  right: 0;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--disabled);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--primary);
+}
+
+::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+button,
+input {
+  outline: none;
+  border: none;
+}
+
+
+input.form {
+  border-bottom: var(--primary) solid 1px !important;
+}
+
+input.form:focus {
+  border-bottom-width: 2px !important;
+}
+
+input.error {
+  border: var(--red) solid 1px !important;
+}
+
+button,
+img {
+  display: block;
+}
+
+a {
+  text-decoration: none;
+  background: transparent;
+}
+
+ul,
+ol,
+dl,
+li {
+  list-style: none;
+}
+
+.disabled {
+  /* color: var(--disabled) !important; */
+  cursor: not-allowed !important;
+  transform: none !important;
+  transition: none !important;
+}
+
+.disabled:hover {
+  color: var(--disabled) !important;
+}
+
+.iconfont {
+  cursor: pointer;
+  background: transparent;
+}
+
+.transparent {
+  background: transparent;
+}

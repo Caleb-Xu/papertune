@@ -4,19 +4,33 @@
     "module": "esnext",
     "strict": true,
     "jsx": "preserve",
+    "resolveJsonModule": true,
     "importHelpers": true,
     "moduleResolution": "node",
     "experimentalDecorators": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "sourceMap": true,
-    "baseUrl": ".",
+    "baseUrl": "./src",
+    "noImplicitAny": false,
     "types": [
       "webpack-env"
     ],
+    "typeRoots": [
+      "./node_modules/vue/types"
+    ],
     "paths": {
       "@/*": [
-        "src/*"
+        "*"
+      ],
+      "components/*": [
+        "renderer/components/*"
+      ],
+      "assets/*": [
+        "renderer/assets/*"
+      ],
+      "utils/*": [
+        "renderer/utils/*"
       ]
     },
     "lib": [
@@ -31,7 +45,7 @@
     "src/**/*.tsx",
     "src/**/*.vue",
     "tests/**/*.ts",
-    "tests/**/*.tsx"
+    "tests/**/*.tsx", "src/renderer/utils/modalOption.js"
   ],
   "exclude": [
     "node_modules"

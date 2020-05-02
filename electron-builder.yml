@@ -1,0 +1,11 @@
+asar: true
+productName: papertune
+nsis: 
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  shortcutName: 纸音
+  perMachine: true
+win: 
+  icon: ./public/logo.ico
+fileAssociations: 
+  ext: [mp3,wav]
