@@ -60,10 +60,10 @@
       - 如果 SAVE_TIME 与本地不一致，从服务器获取个人信息与歌单
     - THEME 应用主题，默认为 green
       - 可选 red,yellow,blue,dark(beta),十六进制颜色码
-    - DOWNLOAD_DIR 下载路径 string
+    - DOWNLOAD_PATH 下载路径 string
       - 本地路径的一部分，下载音乐的文件夹
       - 其下有/music 与/lyric 两个子文件夹，分别存放歌曲与歌词
-    - LOCAL_DIR 本地路径 string[]
+    - LOCAL_PATHS 本地路径 string[]
       - 在拿到之后与下载路径中的歌曲路径合并显示在本地音乐中
     - NOTICE 通知 number 时间戳，表示阅读时间
       - _异步操作_
@@ -81,7 +81,6 @@
       - 有一个固定键 favor
         - 表示【我喜欢】 包括 LOCAL 在内的每个用户都有
     - PLAY_LIST 播放列表 PlayList 对象的键值对一一对应
-      - 历史记录不保存，但是播放列表还是要的
 
 # 注册逻辑
 - 创建成功之后在服务器添加一条用户数据，其中musicListTable为空
@@ -117,3 +116,14 @@
   - 网络歌曲
     - 通过id识别
 - 使用一个统一的mid作为主键
+  - 用于匹配mysql，在本地没有实际意义
+
+# 关于单机模式
+- 优先级最高的模式，直接确定是否联网以及账号是否在线
+
+# 数据使用优先级
+vuex -> _config -> localStorage -> indexedDB
+
+# 关于数据同步
+- 播放列表不与云端同步，且只在程序启动与关闭时才读取与写入
+- 用户信息与用户歌单会在每一次改动时进行同步

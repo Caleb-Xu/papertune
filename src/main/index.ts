@@ -1,6 +1,6 @@
 'use strict';
 
-import { app, protocol, BrowserWindow, Menu} from 'electron';
+import { app, protocol, BrowserWindow, Menu } from 'electron';
 import {
   createProtocol,
   installVueDevtools,
@@ -28,7 +28,7 @@ function createMainWindow(win: BrowserWindow | null) {
     frame: false,
     webPreferences: {
       nodeIntegration: true,
-      webSecurity: false
+      webSecurity: false,
     },
     show: false,
     backgroundColor: '#fff',
@@ -45,11 +45,6 @@ function createMainWindow(win: BrowserWindow | null) {
   }
   //临时
   win.webContents.openDevTools();
-
-  //初始化托盘图标
-  initTray(win);
-  //监听渲染进程
-  initIpc(win);
   win.on('ready-to-show', () => {
     if (win) win.show();
   });
@@ -57,10 +52,12 @@ function createMainWindow(win: BrowserWindow | null) {
   win.on('close', e => {
     app.quit();
   });
+
+  return win;
 }
 
 // Quit when all windows are closed.
-app.on('window-all-closed', () => {
+app.on('window-all-closed', async () => {
   // On macOS it is common for applications and their menu bar
   // to stay active until the user quits explicitly with Cmd + Q
   if (process.platform !== 'darwin') {
@@ -80,8 +77,13 @@ app.on('ready', async () => {
       console.error('Vue Devtools failed to install:', e.toString());
     }
   }
-  Menu.setApplicationMenu(null);//屏蔽顶级菜单，并屏蔽默认快捷键
-  createMainWindow(win);//创建窗口
+  Menu.setApplicationMenu(null); //屏蔽顶级菜单，并屏蔽默认快捷键
+  /**不使用常量进行存储会出现获取不到win的bug */
+  const mainWin = createMainWindow(win); //创建窗口
+  //初始化托盘图标
+  initTray(mainWin);
+  //监听渲染进程
+  initIpc(mainWin);
 });
 
 // Exit cleanly on request from parent process in development mode.

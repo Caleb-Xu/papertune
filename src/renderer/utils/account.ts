@@ -1,4 +1,4 @@
-import {Music, MusicList} from 'utils/music'
+import { Music, MusicList } from 'utils/music';
 
 /**本地用户信息
  * 为了安全，没有密码

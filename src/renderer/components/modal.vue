@@ -17,19 +17,19 @@
           <div id="modal-text">{{text}}</div>
         </slot>
       </main>
-      <footer id="modal-footer">
-        <div id="checkbox-box" :class="[isChecked && 'checked']" v-if="checkbox">
+      <footer id="modal-footer" v-show="!(!checkbox && !yes && !no)">
+        <div id="checkbox-box" :class="[isChecked && 'checked']" v-show="checkbox">
           <label :for="name+'-checkbox'">{{checkbox}}</label>
           <label :for="name+'-checkbox'" :class="[isChecked && 'checked']" class="my-checkbox" />
           <input type="checkbox" v-model="isChecked" class="checkbox" :id="name+'-checkbox'" />
         </div>
         <div id="btn-group">
-          <div id="yes-btn" class="btn" @click="clickBtn('yes')">
+          <div id="yes-btn" v-show="yes" class="btn" @click="select('yes')">
             <div id="yes">{{yes}}</div>
             <span class="iconfont" v-if="yesIcon" :class="[yesIcon]" />
           </div>
 
-          <div id="no-btn" class="btn" @click="clickBtn('no')">
+          <div id="no-btn" v-show="no" class="btn" @click="select('no')">
             <div id="no">{{no}}</div>
             <span class="iconfont" v-if="noIcon" :class="[noIcon]" />
           </div>
@@ -58,23 +58,20 @@
   --theme: var(--primary);
   position: fixed;
   top: 200px;
-  // align-self: center;
-  // left: 50%;
-  // transform: translateX(-50%);
-  // white-space:nowrap
   z-index: 1000;
   display: flex;
   align-items: stretch;
   flex-direction: column;
   box-shadow: var(--shadow-hover);
 
-  &[data-size="s"]{
+  &[data-size='s'] {
     width: 360px;
-    height: 200px
+    height: 200px;
   }
-  &[data-size="m"]{
+
+  &[data-size='m'] {
     width: 540px;
-    height: 300px
+    height: 300px;
   }
 
   #modal-header {

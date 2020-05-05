@@ -1,6 +1,6 @@
 import Vue from 'vue';
 import { mapState } from 'vuex';
-import MenuOption, { MenuItem } from '@/renderer/utils/options/menuOption';
+import { MenuOption, MenuItem } from '@/renderer/utils/options/menuOption';
 import bus from '@/renderer/bus.ts';
 
 enum LIST_INDEX {

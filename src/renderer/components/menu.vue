@@ -1,13 +1,13 @@
 <template>
   <transition name="menu">
-    <div data-root :style="setPosition">
+    <div data-root :style="setPosition" v-show="showMenu">
       <ul id="item-list">
         <li
           v-for="(item,index) in itemFilter"
           :style="{height:itemHeight+'px'}"
           class="item-box"
           :key="index+''"
-          @click.stop="select(index)"
+          @click="select(index)"
         >
           <div
             class="click-box"

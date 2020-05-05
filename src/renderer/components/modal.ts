@@ -23,15 +23,12 @@ export default Vue.extend({
         'max-width': this.maxWidth + 'px',
         'max-height': this.maxHeight + 'px',
       };
-    }
+    },
   },
   methods: {
     /**方向模态框 */
     drop(e: MouseEvent) {
-      window.removeEventListener(
-        'mousemove',
-        this.mouseMove
-      );
+      window.removeEventListener('mousemove', this.mouseMove);
     },
     /**拖动模态框 */
     drag() {
@@ -43,7 +40,7 @@ export default Vue.extend({
       getStyle = window.getComputedStyle(this.$el);
       setStyle = (this.$el as HTMLElement).style;
       // console.log(e.x, e.y);
-      //指针边界处理，有bug，回到窗口后不能跟焦
+      //指针边界处理，有缺陷，回到窗口后不能跟焦
       /* 
       if (
         e.x <= 100 ||
@@ -73,6 +70,9 @@ export default Vue.extend({
         case 'primary':
           val = 'var(--primary)';
           break;
+        case 'green':
+          val = 'var(--green)';
+          break;
         case 'danger':
           val = 'var(--red)';
           break;
@@ -85,13 +85,25 @@ export default Vue.extend({
       }
       (this.$el as HTMLElement).style?.setProperty('--theme', val);
     },
-    clickBtn(val: string) {
-      console.log('close modal', this.name);
+    select(val: string) {
+      console.log('select', this.name);
       this.$emit('close', this.name, val, this.isChecked);
     },
   },
   mounted() {
     this.setTheme();
+  },
+  created() {
+    window.onkeydown = (e: KeyboardEvent) => {
+      switch (e.keyCode) {
+        case 13:
+          this.select('yes');
+          break;
+        case 27:
+          this.$emit('close', this.name);
+          break;
+      }
+    };
   },
   props: {
     /**主文本,可用插槽代替 */
@@ -113,14 +125,14 @@ export default Vue.extend({
     /**确认按钮的内容 */
     yes: {
       type: String,
-      default: '确认',
+      // default: '确认',
     },
     /**确认按钮的图标，可省略 */
     yesIcon: String,
     /**取消按钮的内容 */
     no: {
       type: String,
-      default: '取消',
+      // default: '取消',
     },
     /**取消按钮的图标，可省略 */
     noIcon: String,
@@ -129,7 +141,7 @@ export default Vue.extend({
     /**尺寸，有s,m,两种，默认s */
     size: {
       type: String,
-      default: 's'
-    }
+      default: 's',
+    },
   },
 });

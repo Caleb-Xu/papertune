@@ -10,12 +10,15 @@ declare module 'vue/types/vue' {
       DEFAULT_GRIL_AVATAR: string;
       DEFAULT_BOY_AVATAR: string;
       DEFAULT_MUSIC_PIC: string;
+      DEFAULT_DOWNLOAD_PATH: string;
+      SERVER_HOST: string;
       SINGLE: boolean;
       DEFAULT_COLOR: {};
       SIZE: {
         WIDTH: number;
         HEIGHT: number;
       };
+      LIST_MAX_LENGTH: number;
     };
     $router: VueRouter;
     $route: Route;

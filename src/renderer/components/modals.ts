@@ -1,6 +1,7 @@
 import Vue from 'vue';
 import ModalOption from '@/renderer/utils/options/modalOption';
 import bus from '@/renderer/bus';
+import {ipcRenderer} from 'electron'
 
 const checkCloseOption: ModalOption = {
   text: '点击关闭按钮，您想要？',
@@ -9,6 +10,12 @@ const checkCloseOption: ModalOption = {
   no: '退出程序',
   checkbox: '记住选项',
   title: '关闭Papertune',
+};
+const firstOpenOption: ModalOption = {
+  text: '欢迎使用papertune！',
+  theme: 'normal',
+  yes: 'OK',
+  title: '第一次使用',
 };
 
 export default Vue.extend({
@@ -23,6 +30,10 @@ export default Vue.extend({
           active: false,
           option: checkCloseOption,
         },
+        'first-open': {
+          active: false,
+          option: firstOpenOption,
+        }
       },
     };
   },
@@ -40,6 +51,7 @@ export default Vue.extend({
   },
   created() {
     bus.$on('showModal', option => {
+      ipcRenderer.emit('showModal');
       const modal = this.modalList[option.type];
       /**不存在该类型的模态框则报错 */
       if (modal == undefined) {
@@ -53,3 +65,7 @@ export default Vue.extend({
     });
   },
 });
+
+/**
+ * ? 已知问题，第一次打开不能正常唤起欢迎弹窗
+ */

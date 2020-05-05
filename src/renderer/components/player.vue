@@ -1,20 +1,21 @@
 <template>
   <section data-root id="player">
-    <audio id="main-audio" ref="audio" :src="src" :loop="isLoop" preload :muted="muted"></audio>
+    <div id="disable-block" v-show="playAble" />
+    <audio id="main-audio" ref="audio" :src="music.src" :loop="isLoop" preload :muted="muted"></audio>
     <main id="main">
-      <div id="left-box">
+      <div id="left-box" v-if="music!=null">
         <div id="music-info">
-          <img id="music-pic" draggable="false" :src="pic" @error="pic = _config.DEFAULT_MUSIC_PIC" />
+          <img id="music-pic" draggable="false" :src="music.pic || _config.DEFAULT_MUSIC_PIC" />
           <div id="name-and-artist">
-            <div id="music-name">{{name}}</div>
-            <div id="artist">{{artist}}</div>
+            <div id="music-name">{{music.title}}</div>
+            <div id="artist">{{music.artist}}</div>
           </div>
           <div id="favor-box">
             <div
               id="is-favor"
               class="iconfont"
-              :class="[isFavor?'icon-favorites-filling':'icon-favorites']"
-              @click="isFavor = !isFavor"
+              :class="[music.isFavor?'icon-favorites-filling':'icon-favorites']"
+              @click="music.isFavor = !music.isFavor"
             />
           </div>
         </div>
@@ -27,7 +28,7 @@
           <div id="previous-icon" class="iconfont icon-previous"></div>
         </button>
         <button id="toggle-play-btn" class="control-btn" @click="togglePlay">
-          <div id="toggle-icon" class="iconfont" :class="[playing?'icon-stop':'icon-play']" />
+          <div id="toggle-icon" class="iconfont" :class="[playList.playing?'icon-stop':'icon-play']" />
         </button>
         <button id="next-btn" class="control-btn" @click="go(-1)">
           <div id="next-icon" class="iconfont icon-next"></div>
@@ -37,7 +38,7 @@
             <div id="vol-icon" class="iconfont icon-remind" />
           </div>
           <div id="vol-bar" ref="vol-bar" @click="setVol" @mousedown="dragVol">
-            <div id="vol-track" :style="{width: vol*100 + '%'}">
+            <div id="vol-track" :style="{width: playList.vol*100 + '%'}">
               <div id="vol-point" />
             </div>
           </div>
@@ -54,7 +55,7 @@
               <div
                 @click="changePlayMode(index)"
                 class="play-mode"
-                :class="[index==mode && 'current']"
+                :class="[index==playList.mode && 'current']"
                 v-for="(name,index) in modeNames"
                 :key="name"
               >{{name}}</div>
@@ -63,7 +64,7 @@
         </div>
       </div>
     </main>
-    <div id="progress-bar-box" @click="setProgress" @mousedown="dragProgress">
+    <div id="progress-bar-box" v-show="playAble" @click="setProgress" @mousedown="dragProgress">
       <div id="progress-bar">
         <div id="progress-track" :style="{width: (currentTime / duration)*100 + '%' }">
           <div id="progress-point"></div>
@@ -82,6 +83,20 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
+  border-top: var(--disabled) solid 2px;
+
+  #disable-block {
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    left: 0;
+    top: 0;
+    background-color: var(--disabled);
+    filter: saturate(0);
+    opacity: 0.4;
+    cursor: not-allowed;
+    z-index: 100;
+  }
 
   #main {
     height: 60px;

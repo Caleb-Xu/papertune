@@ -1,0 +1,17 @@
+- /client
+  - /getVersion GET 获取服务器中账号版本（用时间戳表示）
+    - props
+      - uid 用户
+    - resp
+      - timestamp _number_ 时间戳
+  - /updateAccountData POST 从本地更新数据到服务器
+    - props
+      - account _Account_
+      - musicListTable _Array<MusicList>_
+    - resp
+      - ...
+  - /loadAccountData POST 从服务器更新数据到本地
+    - props
+      - uid
+    - resp
+      - 用户数据

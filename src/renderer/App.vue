@@ -1,5 +1,5 @@
 <template>
-  <div id="app" @click="hideMenu">
+  <div id="app">
     <topNav class="top-nav" />
     <main>
       <sidebar class="side-bar" />
@@ -8,13 +8,8 @@
         <router-view />
       </section>
     </main>
-    <player class="player" v-bind="playerOption" />
-    <myMenu
-      v-show="showMenu"
-      :xy="menuOption.xy"
-      @select="menuSelect"
-      :menuItems="menuOption.menuItems"
-    />
+    <player class="player"/>
+    <myMenu/>
     <modals/>
   </div>
 </template>

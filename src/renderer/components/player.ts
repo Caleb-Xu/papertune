@@ -1,7 +1,7 @@
 import Vue from 'vue';
-import config from '@/baseConfig';
 import bus from '../bus';
-import { PlayMode, ModeNames } from 'utils/music';
+import { PlayMode, ModeNames, PlayList, Music, MusicType } from 'utils/music';
+import { mapState, mapMutations } from 'vuex';
 
 /**
  * * 下午的目标：
@@ -9,65 +9,32 @@ import { PlayMode, ModeNames } from 'utils/music';
  * * 初始化indexedDB，并投入使用
  */
 
-
 export default Vue.extend({
   data() {
     return {
       muted: false,
       duration: 0,
       currentTime: 0,
-      playing: false,
-      vol: 0,
+      // playing: false,
+      // vol: 0,
       modeNames: ModeNames,
       showPlayModeList: false,
       // progressBar: new HTMLElement()
+      // playList: {} as PlayList,
     };
   },
-  props: {
-    /**音源 */
-    src: {
-      type: String,
-      validator(val) {
-        return /(.mp3)|(.wav)$/.test(val);
-      },
-      default: null,
-    },
-    /**封面 */
-    pic: {
-      type: String,
-      default: config.DEFAULT_MUSIC_PIC,
-    },
-    /**歌名 */
-    name: {
-      type: String,
-      default: '未知音乐',
-    },
-    /**歌手 */
-    artist: {
-      type: String,
-      default: '佚名',
-    },
-    /**是否已添加到我喜欢 */
-    isFavor: {
-      type: Boolean,
-      default: false,
-    },
-    /**是否单曲循环 */
-    isLoop: {
-      type: Boolean,
-      default: false,
-    },
-    /**播放模式 */
-    mode: {
-      validator(val) {
-        return (
-          [PlayMode.ORDER, PlayMode.LOOP, PlayMode.RANDOM].indexOf(val) != -1
-        );
-      },
-      default: PlayMode.ORDER,
-    },
-  },
   computed: {
+    ...mapState(['isOnline', 'downloadPath']),
+    playList(): PlayList {
+      return this.$store.getters.getPlayList;
+    },
+    music(): Music {
+      return this.$store.getters.getMusic;
+    },
+    /**判定是否能播放，可能有多个判定条件 */
+    playAble(): boolean {
+      return this.music.src != '' && true;
+    },
     getAudio(): Function {
       let audio;
 
@@ -81,10 +48,14 @@ export default Vue.extend({
       };
     },
     modeName(): string {
-      return this.modeNames[this.mode];
+      return this.modeNames[this.playList.mode];
+    },
+    isLoop(): boolean {
+      return this.playList.mode == PlayMode.LOOP;
     },
   },
   methods: {
+    ...mapMutations(['go']),
     getTimeFormat(num: number): string {
       if (Number.isNaN(num)) return '0:00';
 
@@ -93,14 +64,16 @@ export default Vue.extend({
     },
     pause() {
       this.getAudio()?.pause();
+      this.playList.playing = false;
     },
     play() {
       this.getAudio()?.play();
+      this.playList.playing = true;
     },
     initData(e: Event) {
       const audio = e.target as HTMLAudioElement;
       this.duration = audio.duration;
-      this.vol = audio.volume;
+      this.playList.vol = audio.volume;
     },
     /**更新data中的时间进度，监听timeupdate */
     timeUpdate(e: Event) {
@@ -108,8 +81,8 @@ export default Vue.extend({
     },
     /**播放/暂停 */
     togglePlay() {
-      this.playing = !this.playing;
-      this.playing ? this.getAudio()?.play() : this.getAudio().pause();
+      this.playList.playing = !this.playList.playing;
+      this.playList.playing ? this.getAudio()?.play() : this.getAudio().pause();
     },
     /**切换静音 */
     toggleMute() {
@@ -127,10 +100,10 @@ export default Vue.extend({
     },
     setVol(e: MouseEvent) {
       // console.log(e.offsetX);
-      this.vol = e.offsetX / (e.target as HTMLElement).clientWidth;
-      if (this.vol > 1) this.vol = 1;
-      else if (this.vol < 0) this.vol = 0;
-      (this.getAudio() as HTMLAudioElement).volume = this.vol;
+      this.playList.vol = e.offsetX / (e.target as HTMLElement).clientWidth;
+      if (this.playList.vol > 1) this.playList.vol = 1;
+      else if (this.playList.vol < 0) this.playList.vol = 0;
+      (this.getAudio() as HTMLAudioElement).volume = this.playList.vol;
     },
     /**控制播放进度
      * * 拖动过程中不会影响进度，鼠标释放再修改进度
@@ -165,23 +138,6 @@ export default Vue.extend({
       window.removeEventListener('mousemove', this.moveProgressBar);
       window.removeEventListener('mouseup', this.dropProgress);
     },
-    /**跳转 */
-    go(index) {
-      switch (index) {
-        case -1:
-          /**后退 */
-          break;
-        case 1:
-          /**前进 */
-          break;
-        case 0:
-          /**重新播放 */
-          break;
-      }
-
-      /**代码测试 */
-      const fs = require('fs');
-    },
     /**显示/隐藏歌单 */
     togglePlayList() {
       bus.$emit('togglePlayList');
@@ -190,15 +146,17 @@ export default Vue.extend({
       this.showPlayModeList = !this.showPlayModeList;
     },
     changePlayMode(index) {
-      if (index != this.mode) bus.$emit('changePlayMode', index);
+      // if (index != this.mode) bus.$emit('changePlayMode', index);
+      if (index != this.playList.mode) bus.$emit('changePlayMode', index);
       this.showPlayModeList = !this.showPlayModeList;
     },
   },
+  created() {
+    // console.log('history =', this.getPlayList.playHistory);
+    // this.playList = this.getPlayList;
+    console.log('music = ', this.music);
+  },
   mounted() {
-    // this.duration = (this.getAudio() as HTMLAudioElement).duration;
-    /* this.$nextTick(() => {
-      console.log((this.getAudio() as HTMLAudioElement).currentTime);
-    }); */
     const audio = this.getAudio() as HTMLAudioElement;
     audio.ondurationchange = this.initData;
     audio.addEventListener('timeupdate', this.timeUpdate);

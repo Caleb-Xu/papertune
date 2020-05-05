@@ -1,6 +1,6 @@
-export enum MusicType{
+export enum MusicType {
   LOCAL,
-  CLOUD
+  CLOUD,
 }
 
 /**歌曲信息
@@ -24,7 +24,7 @@ export interface Music {
   pic?: string;
   /**歌词，lrc格式的文本 | 路径，
    * 云音乐默认为文本，可以保存为文件
-   * 根据字符串特征判断 
+   * 根据字符串特征判断
    */
   lrc?: string;
   /**来源，LOCAL or CLOUD */
@@ -38,7 +38,7 @@ export interface Music {
 /**歌单 */
 export interface MusicList {
   /**主键 */
-  lid: string;
+  lid: number;
   /**歌曲列表 */
   list: Array<Music>;
   /**歌单名 */
@@ -47,6 +47,17 @@ export interface MusicList {
   description?: string;
   /**封面 */
   pic?: string;
+  /**外键，指向拥有歌单的用户 */
+  uid: number;
+}
+
+/**歌单索引
+ * 避免由于加载歌曲列表带来的性能负担
+ * 在用户选择了某一个歌单后加载完整的歌单对象
+ */
+export interface MusicListIndex {
+  lid: number;
+  name: string;
 }
 
 /**播放列表 */
@@ -55,20 +66,13 @@ export interface PlayList {
   queue: Array<Music>;
   /**播放模式 */
   mode: PlayMode;
-  /**当前音乐 */
-  current: Music;
-  /**当前音乐所处位置 */
+  /**当前音乐所处位置，-1表示不存在 */
   currentIndex: number;
   /**是否正在播放 */
   playing: boolean;
-}
-
-/**历史记录 */
-export interface PlayHistory {
-  /**播放队列 */
-  queue: Array<Music>;
-  /**最大记录数 */
-  max: number;
+  /**音量 */
+  vol: number;
+  playHistory: Array<Music>;
 }
 
 /**播放模式 */
@@ -86,21 +90,28 @@ ModeNames[PlayMode.ORDER] = '顺序播放';
 ModeNames[PlayMode.LOOP] = '单曲循环';
 ModeNames[PlayMode.RANDOM] = '随机播放';
 
-
-/**歌曲是否在列表中 */
-export function hasMusic(music: Music, list: Array<Music>): boolean {
+/**歌曲在列表中位置，找不到返回-1 */
+export function findMusic(music: Music, list: Array<Music>): number {
+  let result = -1;
   /**云音乐根据id判断 */
-  if(music.type == MusicType.CLOUD){
-    return list.some(item=>{
-      return item.id == music.id;
-    })
-  } 
-  /**本地音乐根据路径判断 */
-  else if(music.type == MusicType.LOCAL){
-    return list.some(item=>{
-      return item.src == music.src;
-    })
+  if (music.type == MusicType.CLOUD) {
+    list.some((item, index) => {
+      if (item.id == music.id) {
+        result = index;
+        return true;
+      }
+      return false;
+    });
+  } else if (music.type == MusicType.LOCAL) {
+    /**本地音乐根据路径判断 */
+    list.some((item, index) => {
+      if (item.src == music.src) {
+        result = index;
+        return true;
+      }
+      return false;
+    });
   }
-  console.warn('other type?',music.type);
-  return false;
+  console.warn('other type?', music.type);
+  return result;
 }

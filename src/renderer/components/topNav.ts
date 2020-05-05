@@ -1,7 +1,7 @@
 import { ipcRenderer } from 'electron';
 import Vue from 'vue';
 import bus from '@/renderer/bus.ts';
-import MenuOption, { MenuItem } from '../utils/options/menuOption';
+import { MenuOption, MenuItem } from '../utils/options/menuOption';
 import { mapState } from 'vuex';
 
 export default Vue.extend({
@@ -42,7 +42,7 @@ export default Vue.extend({
      */
     go(index: number): void {
       // console.log(`go${index}`);
-      index;
+      this.$router.go(index);
       ///
     },
     /**
@@ -78,6 +78,7 @@ export default Vue.extend({
         if (val == 'yes') {
           ipcRenderer.send('closeWin');
         } else if (val == 'no') {
+          /**备份数据，在备份完毕后再触发quit */
           ipcRenderer.send('quit');
         }
       } else {

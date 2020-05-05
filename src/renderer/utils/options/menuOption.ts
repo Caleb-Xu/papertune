@@ -1,4 +1,4 @@
-export default interface MenuOption {
+export  interface MenuOption {
   /**菜单类型 */
   type: string;
   /**菜单项 */
