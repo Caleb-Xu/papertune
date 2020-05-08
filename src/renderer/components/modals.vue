@@ -15,12 +15,12 @@
 
 <style lang="stylus" scoped>
 [data-root] {
-  position absolute
+  position: absolute;
   background: transparent;
   width: 100vw;
   height: 100vh;
   display: flex;
-  justify-content center
-  align-items center
+  justify-content: center;
+  align-items: center;
 }
 </style>

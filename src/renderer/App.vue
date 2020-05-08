@@ -8,9 +8,10 @@
         <router-view />
       </section>
     </main>
-    <player class="player"/>
-    <myMenu/>
-    <modals/>
+    <player class="player" />
+    <myMenu />
+    <modals />
+    <img id='music-data' alt="">
   </div>
 </template>
 
@@ -39,6 +40,13 @@
 
     .router-view-box {
       flex: 1;
+      display: flex;
+      z-index: 10;
+
+      >* {
+        /* 填充整个空间 */
+        flex: 1;
+      }
     }
   }
 

@@ -8,7 +8,7 @@
         <div
           @click="go(-1)"
           title="后退"
-          class="top-btn iconfont icon-back"
+          class="top-btn info-to-normal iconfont icon-back"
           :class="[!canGo(-1)&&'disabled']"
           :disabled="!canGo(-1)"
         />
@@ -17,7 +17,7 @@
         <div
           @click="go(1)"
           title="前进"
-          class="top-btn iconfont icon-more"
+          class="top-btn info-to-normal iconfont icon-more"
           :class="[!canGo(1)&&'disabled']"
           :disabled="!canGo(1)"
         />
@@ -30,7 +30,7 @@
         <div
           @click="search"
           title="搜索"
-          class="top-btn iconfont icon-search"
+          class="top-btn info-to-normal iconfont icon-search"
           :class="[keyword?'abled':'disabled']"
           :disabled="keyword"
         />
@@ -43,7 +43,7 @@
           @click="showTopMenu"
           data-type="downloadTab"
           title="下载列表"
-          class="top-btn iconfont icon-icondownload"
+          class="top-btn info-to-normal iconfont icon-icondownload"
         />
       </li>
       <li class="btn-item"></li>
@@ -52,7 +52,7 @@
           @click.stop="showTopMenu"
           data-type="topMenu"
           title="菜单"
-          class="top-btn iconfont icon-category"
+          class="top-btn info-to-normal iconfont icon-category"
         />
       </li>
       <li class="btn-item">
@@ -60,11 +60,11 @@
           @click="minimizeBtn"
           title="最小化"
           style="font-size:32px;"
-          class="top-btn iconfont icon-moreunfold"
+          class="top-btn info-to-normal iconfont icon-moreunfold"
         />
       </li>
       <li class="btn-item">
-        <div @click="close()" title="退出窗口" class="top-btn iconfont icon-close" />
+        <div @click="close()" title="退出窗口" class="top-btn info-to-normal iconfont icon-close" />
       </li>
     </ul>
   </nav>
@@ -118,14 +118,14 @@
     .top-btn {
       font-size: var(--l);
       -webkit-app-region: no-drag;
-      transition: all 0.3s;
-      color: var(--info);
-      cursor: pointer;
+      // transition: all var(--during);
+      // color: var(--info);
 
-      &:hover {
-        color: var(--normal);
-        transform: scale(1.2);
-      }
+      // &:hover {
+      //   color: var(--normal);
+      //   text-shadow: var(--shadow);
+      //   // transform: scale(1.2);
+      // }
     }
   }
 

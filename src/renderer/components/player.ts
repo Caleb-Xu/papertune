@@ -1,7 +1,8 @@
 import Vue from 'vue';
-import bus from '../bus';
-import { PlayMode, ModeNames, PlayList, Music, MusicType } from 'utils/music';
+import bus from '@/renderer/bus';
+import { PlayMode, ModeNames, PlayList, Music } from 'utils/music';
 import { mapState, mapMutations } from 'vuex';
+import { getMusicPic } from '../utils/musicFile';
 
 /**
  * * 下午的目标：
@@ -15,16 +16,30 @@ export default Vue.extend({
       muted: false,
       duration: 0,
       currentTime: 0,
-      // playing: false,
-      // vol: 0,
       modeNames: ModeNames,
       showPlayModeList: false,
-      // progressBar: new HTMLElement()
-      // playList: {} as PlayList,
+      audio: {} as HTMLAudioElement,
+      pic:''
     };
+  },
+  watch: {
+    /**音量使用watch托管，希望不会坑 */
+    'playList.vol'(vol) {
+      // console.log('vol is', vol);
+      this.audio.volume = vol;
+    },
+    'playList.playing'(bool) {
+      console.log('playing watched',bool);
+      this.$nextTick(() => {
+        if (bool == true) {
+          this.audio.play();
+        } else this.audio.pause();
+      });
+    },
   },
   computed: {
     ...mapState(['isOnline', 'downloadPath']),
+    /**vuex中的playList */
     playList(): PlayList {
       return this.$store.getters.getPlayList;
     },
@@ -35,18 +50,6 @@ export default Vue.extend({
     playAble(): boolean {
       return this.music.src != '' && true;
     },
-    getAudio(): Function {
-      let audio;
-
-      return (): HTMLAudioElement => {
-        if (audio) {
-          return audio;
-        } else
-          return (audio =
-            (this.$el.querySelector('audio#main-audio') as HTMLAudioElement) ||
-            null);
-      };
-    },
     modeName(): string {
       return this.modeNames[this.playList.mode];
     },
@@ -56,6 +59,11 @@ export default Vue.extend({
   },
   methods: {
     ...mapMutations(['go']),
+    getMusicPic,
+    toMusicPage(){
+      this.$router.push('musicInfo');
+    },
+    /**时长转为时间格式文本 */
     getTimeFormat(num: number): string {
       if (Number.isNaN(num)) return '0:00';
 
@@ -63,17 +71,21 @@ export default Vue.extend({
       else return ~~(num / 60) + ':' + ~~(num % 60);
     },
     pause() {
-      this.getAudio()?.pause();
       this.playList.playing = false;
     },
     play() {
-      this.getAudio()?.play();
       this.playList.playing = true;
     },
-    initData(e: Event) {
-      const audio = e.target as HTMLAudioElement;
-      this.duration = audio.duration;
-      this.playList.vol = audio.volume;
+    replay(){
+      this.audio.currentTime = 0;
+      this.playList.playing = true;
+    },
+    playErr(){
+      console.warn('can not play',this.music);
+      /**避免重复播放错误歌曲的死循环 */
+      if(this.playList.queue.length>1){
+        this.go(1);
+      }
     },
     /**更新data中的时间进度，监听timeupdate */
     timeUpdate(e: Event) {
@@ -82,12 +94,12 @@ export default Vue.extend({
     /**播放/暂停 */
     togglePlay() {
       this.playList.playing = !this.playList.playing;
-      this.playList.playing ? this.getAudio()?.play() : this.getAudio().pause();
+      this.playList.playing ? this.audio.play() : this.audio.pause();
     },
     /**切换静音 */
     toggleMute() {
       this.muted = !this.muted;
-      (this.getAudio() as HTMLAudioElement).muted = this.muted;
+      this.audio.muted = this.muted;
     },
     /**控制音量 */
     dragVol(e: MouseEvent) {
@@ -103,7 +115,6 @@ export default Vue.extend({
       this.playList.vol = e.offsetX / (e.target as HTMLElement).clientWidth;
       if (this.playList.vol > 1) this.playList.vol = 1;
       else if (this.playList.vol < 0) this.playList.vol = 0;
-      (this.getAudio() as HTMLAudioElement).volume = this.playList.vol;
     },
     /**控制播放进度
      * * 拖动过程中不会影响进度，鼠标释放再修改进度
@@ -115,8 +126,7 @@ export default Vue.extend({
       let progress = e.offsetX / (e.target as HTMLElement).clientWidth;
       if (progress > 1) progress = 1;
       else if (progress < 0) progress = 0;
-      const audio = this.getAudio() as HTMLAudioElement;
-      audio.currentTime = audio.duration * progress;
+      this.audio.currentTime = this.audio.duration * progress;
     },
     moveProgressBar(e: MouseEvent) {
       let progress = e.offsetX / (e.target as HTMLElement).clientWidth;
@@ -126,15 +136,13 @@ export default Vue.extend({
       this.currentTime = this.duration * progress;
     },
     dragProgress(e: MouseEvent) {
-      const audio = this.getAudio() as HTMLAudioElement;
-      audio.removeEventListener('timeupdate', this.timeUpdate);
+      this.audio.removeEventListener('timeupdate', this.timeUpdate);
       window.addEventListener('mousemove', this.moveProgressBar);
       window.addEventListener('mouseup', this.dropProgress);
     },
     dropProgress(e: MouseEvent) {
       this.setProgress(e);
-      const audio = this.getAudio() as HTMLAudioElement;
-      audio.addEventListener('timeupdate', this.timeUpdate);
+      this.audio.addEventListener('timeupdate', this.timeUpdate);
       window.removeEventListener('mousemove', this.moveProgressBar);
       window.removeEventListener('mouseup', this.dropProgress);
     },
@@ -146,20 +154,23 @@ export default Vue.extend({
       this.showPlayModeList = !this.showPlayModeList;
     },
     changePlayMode(index) {
-      // if (index != this.mode) bus.$emit('changePlayMode', index);
-      if (index != this.playList.mode) bus.$emit('changePlayMode', index);
-      this.showPlayModeList = !this.showPlayModeList;
+      this.playList.mode = index;
+      this.showPlayModeList = false;
     },
   },
   created() {
-    // console.log('history =', this.getPlayList.playHistory);
-    // this.playList = this.getPlayList;
-    console.log('music = ', this.music);
+    bus.$on('replay',this.replay);
   },
   mounted() {
-    const audio = this.getAudio() as HTMLAudioElement;
-    audio.ondurationchange = this.initData;
-    audio.addEventListener('timeupdate', this.timeUpdate);
+    this.audio = this.$refs.audio as HTMLAudioElement;
+    this.audio.volume = this.playList.vol;
+    /**切歌触发器，可能有更合适的选择 */
+    this.audio.ondurationchange = async() => {
+      this.duration = this.audio.duration;
+      this.pic = await this.getMusicPic(this.music)||'';
+    };
+    this.audio.addEventListener('timeupdate', this.timeUpdate);
+    
     // this.progressBar = this.$el.querySelector('#progress-bar-box') as HTMLElement;
   },
   components: {

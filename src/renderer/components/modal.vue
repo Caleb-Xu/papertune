@@ -17,21 +17,32 @@
           <div id="modal-text">{{text}}</div>
         </slot>
       </main>
-      <footer id="modal-footer" v-show="!(!checkbox && !yes && !no)">
-        <div id="checkbox-box" :class="[isChecked && 'checked']" v-show="checkbox">
-          <label :for="name+'-checkbox'">{{checkbox}}</label>
-          <label :for="name+'-checkbox'" :class="[isChecked && 'checked']" class="my-checkbox" />
-          <input type="checkbox" v-model="isChecked" class="checkbox" :id="name+'-checkbox'" />
+      <footer id="modal-footer" v-show="checkbox || yes || no">
+        <div id="checkbox-box" :class="[isChecked && 'checked']">
+          <label :for="name+'-checkbox'" v-show="checkbox">{{checkbox}}</label>
+          <label
+            :for="name+'-checkbox'"
+            :class="[isChecked && 'checked']"
+            class="my-checkbox"
+            v-show="checkbox"
+          />
+          <input
+            type="checkbox"
+            v-model="isChecked"
+            class="checkbox"
+            :id="name+'-checkbox'"
+            v-show="checkbox"
+          />
         </div>
         <div id="btn-group">
-          <div id="yes-btn" v-show="yes" class="btn" @click="select('yes')">
+          <div id="yes-btn" v-show="yes" class="btn shadow-block" @click="select('yes')">
             <div id="yes">{{yes}}</div>
-            <span class="iconfont" v-if="yesIcon" :class="[yesIcon]" />
+            <span class="iconfont btn-icon" v-if="yesIcon" :class="[yesIcon]" />
           </div>
 
-          <div id="no-btn" v-show="no" class="btn" @click="select('no')">
+          <div id="no-btn" v-show="no" class="btn shadow-block" @click="select('no')">
             <div id="no">{{no}}</div>
-            <span class="iconfont" v-if="noIcon" :class="[noIcon]" />
+            <span class="iconfont btn-icon" v-if="noIcon" :class="[noIcon]" />
           </div>
         </div>
       </footer>
@@ -115,6 +126,7 @@
   #modal-body {
     flex: 1;
     padding: 20px;
+    overflow-y: auto;
 
     #modal-text {
       color: var(--normal);
@@ -191,18 +203,12 @@
         margin-left: 10px;
         padding: 8px;
         cursor: pointer;
-        box-shadow: var(--shadow);
         font-size: var(--s);
 
         >* {
           background: transparent;
           display: block;
           margin: 0 2px;
-        }
-
-        &:hover {
-          transform: translateY(-5%);
-          box-shadow: var(--shadow-hover);
         }
 
         &#yes-btn {

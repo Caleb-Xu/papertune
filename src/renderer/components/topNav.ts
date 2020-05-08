@@ -63,7 +63,7 @@ export default Vue.extend({
      * 关闭前让用户指定关闭行为的指向（后台运行 | 退出程序）
      */
     close(val?, isChecked?): void {
-      console.log(arguments.length);
+      // console.log(arguments.length);
       if (arguments.length > 1) {
         if (!/(yes)|(no)/.test(val)) {
           console.error('error val', val);
@@ -78,12 +78,15 @@ export default Vue.extend({
         if (val == 'yes') {
           ipcRenderer.send('closeWin');
         } else if (val == 'no') {
-          /**备份数据，在备份完毕后再触发quit */
-          ipcRenderer.send('quit');
+          /**发送到顶级组件，备份数据，在备份完毕后再触发quit */
+          bus.$emit('quit')
+          // ipcRenderer.send('quit');
         }
       } else {
         if (val == 'quit') {
-          ipcRenderer.send('quit');
+          /**发送到顶级组件，备份数据，在备份完毕后再触发quit */
+          this.$emit('quit');
+          // ipcRenderer.send('quit');
         }
         const close = localStorage.getItem('click-to-close');
         if (close == undefined) {

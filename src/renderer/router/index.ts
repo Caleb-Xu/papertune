@@ -6,9 +6,27 @@ Vue.use(VueRouter);
 
 const routes: Array<RouteConfig> = [
   {
-    path: '/localList',
+    // path: '/localList',
+    path:'/',
     name: 'localList',
     component: localList,
+  },
+  {
+    path:'/musicInfo',
+    name:'musicInfo',
+    component:undefined,
+  },
+  {
+    path:'/setting',
+    name:'setting',
+    component:undefined,
+    children:[
+      {
+        path:'base',
+        name:'setting-base',
+        component:undefined
+      }
+    ]
   },
   {
     path: '*',

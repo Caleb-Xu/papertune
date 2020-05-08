@@ -4,17 +4,24 @@ import {
   PlayList,
   MusicListIndex,
   Music,
+  MusicListPayload,
+  SubmitType,
 } from 'utils/music';
 import { Account } from 'utils/account';
-import playList from './playList'
+import playList from './playList';
+import config from '@/baseConfig';
 
-interface RootStore {
-  isOnline: boolean;
-  isLogin: boolean;
-  account: Account | null;
-  musicLiistIndexs: Array<MusicListIndex>;
-  downloadPath: string;
-  localPaths: Array<string>;
+/**获取歌单数据库 */
+function getMusicListDB(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open('PLAY_LIST');
+    request.onsuccess = () => {
+      resolve(request.result);
+    };
+    request.onerror = err => {
+      reject('getMusicListDB err' + err);
+    };
+  });
 }
 
 Vue.use(Vuex);
@@ -30,6 +37,8 @@ const options: StoreOptions<any> = {
       account: null as Account | null,
       /**歌单索引 */
       musicLiistIndexs: [] as Array<MusicListIndex>,
+      /**【我喜欢】歌单的内容，便于显示❤ */
+      favorList: [] as Array<Music>,
       /**下载目录 */
       downloadPath: '',
       localPaths: [] as Array<string>,
@@ -45,7 +54,15 @@ const options: StoreOptions<any> = {
     /**获取置于模块中的playList */
     getPlayList(state): PlayList {
       return state.playList;
-    }
+    },
+    /**下载路径与本地路径相加 */
+    getAllPaths(state): Array<string> {
+      if (state.downPath == '') return state.localPaths;
+      else
+        return (state.localPaths as Array<string>).concat(
+          state.downloadPath as string
+        );
+    },
   },
   mutations: {
     setOnline(state, value: boolean) {
@@ -61,10 +78,39 @@ const options: StoreOptions<any> = {
     },
     setIndexs(state, value: Array<MusicListIndex>) {
       state.musicLiistIndexs = value;
-    }, 
+    },
+  },
+  actions: {
+    /**修改歌单，与数据库关联
+     * * 关键函数，每一次对歌单进行操作时都要调用这个方法
+     */
+    async modifMusicList(context, payload: MusicListPayload) {
+      const db: IDBDatabase = await getMusicListDB();
+      /**判断是否同步到server */
+      const needUpload =
+        !config.SINGLE && context.state.isOnline && context.state.isLogin;
+      switch (payload.act) {
+        case SubmitType.ADD:
+          /**添加 */
+          break;
+        case SubmitType.REMOVE:
+          /**删除 */
+          break;
+        case SubmitType.EDIT:
+          /**编辑 */
+          break;
+        case SubmitType.DROP:
+          /**移除 */
+          break;
+        case SubmitType.CREATE:
+          /**创建 */
+          break;
+      }
+      console.log('modifMusicList', payload);
+    },
   },
   modules: {
-    playList
+    playList,
   },
 };
 

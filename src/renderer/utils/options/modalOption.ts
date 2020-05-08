@@ -15,4 +15,6 @@ export default interface ModalOption {
   no?: string;
   /**第一个按钮的图标 */
   noIcon?: string;
+  /**s或m */
+  size?: string;
 }

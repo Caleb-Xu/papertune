@@ -1,7 +1,13 @@
 import Vue from 'vue';
 import ModalOption from '@/renderer/utils/options/modalOption';
 import bus from '@/renderer/bus';
-import {ipcRenderer} from 'electron'
+import { ipcRenderer } from 'electron';
+import { Notice } from 'utils/others';
+
+interface ModalMsg {
+  type: string;
+  info?: any;
+}
 
 const checkCloseOption: ModalOption = {
   text: '点击关闭按钮，您想要？',
@@ -13,9 +19,14 @@ const checkCloseOption: ModalOption = {
 };
 const firstOpenOption: ModalOption = {
   text: '欢迎使用papertune！',
-  theme: 'normal',
+  theme: 'primary',
   yes: 'OK',
   title: '第一次使用',
+};
+const noticeOption: ModalOption = {
+  yes: 'OK',
+  theme: 'primary',
+  size: 'm',
 };
 
 export default Vue.extend({
@@ -33,7 +44,11 @@ export default Vue.extend({
         'first-open': {
           active: false,
           option: firstOpenOption,
-        }
+        },
+        notice: {
+          active: false,
+          option: noticeOption,
+        },
       },
     };
   },
@@ -50,19 +65,25 @@ export default Vue.extend({
     },
   },
   created() {
-    bus.$on('showModal', option => {
-      ipcRenderer.emit('showModal');
+    bus.$on('showModal', (option: ModalMsg) => {
+      ipcRenderer.send('showModal');
       const modal = this.modalList[option.type];
       /**不存在该类型的模态框则报错 */
       if (modal == undefined) {
         console.error("can't not find modal", option.type);
         return;
       }
+      if (option.type == 'notice') {
+        const notice: Notice = option.info;
+        noticeOption.title = notice.title;
+        noticeOption.text = notice.content;
+      }
       /**如果模态框活跃，不操作 */
       if (modal.active) return;
       console.log('showModal', option.type);
       this.$set(this.modalList[option.type], 'active', true);
     });
+    // console.log('can show modal');
   },
 });
 

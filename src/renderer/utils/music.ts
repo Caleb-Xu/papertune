@@ -10,7 +10,7 @@ export enum MusicType {
 export interface Music {
   /**用于适配Mysql的字段,在服务器中生成，在客户端中只读 */
   mid?: number;
-  /**配合网易云API使用，本地id为0，-1为error */
+  /**配合网易云API使用，本地id为0，-1为错误或未知 */
   id: number;
   /**url，网易云的url在特定时间内会失效 */
   src: string;
@@ -20,19 +20,40 @@ export interface Music {
   artist?: string;
   /**专辑 */
   album?: string;
-  /**封面，计算得出 */
-  pic?: string;
+  // /**封面，计算得出 */
+  // pic?: string;
   /**歌词，lrc格式的文本 | 路径，
    * 云音乐默认为文本，可以保存为文件
    * 根据字符串特征判断
    */
   lrc?: string;
   /**来源，LOCAL or CLOUD */
-  type: MusicType;
+  type?: MusicType;
   /**时长 */
-  duration: number;
+  duration?: number;
   /**是否添加到【我喜欢】 */
   isFavor: boolean;
+}
+
+/**在解析本地音乐文件时使用 */
+export interface MusicFileInfo {
+  /**音乐标题 */
+  title?: string;
+  /**歌手 */
+  artist?: string;
+  /**专辑 */
+  album?: string;
+  /**封面 */
+  pic?: string;
+}
+
+export interface MusicListInfo {
+  /**歌单名 */
+  name: string;
+  /**描述 */
+  description?: string;
+  /**封面，路径或编码 */
+  pic?: string;
 }
 
 /**歌单 */
@@ -41,13 +62,8 @@ export interface MusicList {
   lid: number;
   /**歌曲列表 */
   list: Array<Music>;
-  /**歌单名 */
-  name: string;
-  /**描述 */
-  description?: string;
-  /**封面 */
-  pic?: string;
-  /**外键，指向拥有歌单的用户 */
+  info: MusicListInfo;
+  /**主键，外键，指向拥有歌单的用户 */
   uid: number;
 }
 
@@ -57,7 +73,7 @@ export interface MusicList {
  */
 export interface MusicListIndex {
   lid: number;
-  name: string;
+  info: MusicListInfo;
 }
 
 /**播放列表 */
@@ -111,7 +127,32 @@ export function findMusic(music: Music, list: Array<Music>): number {
       }
       return false;
     });
-  }
-  console.warn('other type?', music.type);
+  } else console.warn('other type?', music.type);
   return result;
+}
+
+/**用于表示歌单修改内容的payload */
+export interface MusicListPayload {
+  /**目标歌单id */
+  lid?: number;
+  /**目标歌曲，add或remove时 */
+  music?: Music;
+  /**目标信息，edit时 */
+  info?: MusicListInfo;
+  /**目标动作 */
+  act: SubmitType;
+}
+
+/**提交类型 */
+export enum SubmitType {
+  /**添加 */
+  ADD,
+  /**移去 */
+  REMOVE,
+  /**删除（歌单） */
+  DROP,
+  /**编辑（信息） */
+  EDIT,
+  /**新建 */
+  CREATE,
 }

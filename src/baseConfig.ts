@@ -2,8 +2,6 @@
  * 全局常量
  */
 import { join } from 'path';
-/* //@ts-ignore
-const ICON = join(__static, 'icon/logo.png'); */
 /**无法被识别的静态文件目录 */
 //@ts-ignore
 const _static = __static;
@@ -36,9 +34,9 @@ export default {
   SINGLE: false,
   /**本地服务器或远程服务器 */
   /**dev */
-  SERVER_HOST:'http://localhost:4396/',
+  SERVER_HOST:'http://localhost:4396/client',
   /**prod */
-  // SERVER_HOST:'http://domain:port/',
+  // SERVER_HOST:'http://domain:port',
   /**列表最大长度 */
   LIST_MAX_LENGTH: 200
 };

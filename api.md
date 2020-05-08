@@ -15,3 +15,11 @@
       - uid
     - resp
       - 用户数据
+  - /checkNotice GET 检查公告，获取最近的未读公告
+    - props
+      - checkTime 本客户端的上次已读时间
+    - resp
+      - obj 有公告时
+        - title
+        - content
+      - false 无公告时

@@ -21,7 +21,7 @@ export default function(win: BrowserWindow) {
     })
     /**弹出模态框时任务栏闪烁 */
     .on('showModal', e => {
-      console.log('showModal');
+      console.log('ipc showModal');
       win.flashFrame(true);
     });
 }

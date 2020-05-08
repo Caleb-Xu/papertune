@@ -1,3 +1,4 @@
+import bus from '@/renderer/bus';
 import { Module } from 'vuex';
 import { PlayList, Music, PlayMode, findMusic, MusicType } from 'utils/music';
 import Vue from 'vue';
@@ -5,16 +6,13 @@ import Vue from 'vue';
 const option: Module<PlayList, any> = {
   // namespaced: true,
 
-  state() {
-    return {
-      vol: 0.5,
-      // current: null,
-      currentIndex: -1,
-      queue: [] as Array<Music>,
-      mode: PlayMode.ORDER,
-      playing: false,
-      playHistory: [] as Array<Music>,
-    };
+  state: {
+    vol: 0.5,
+    currentIndex: -1,
+    queue: [] as Array<Music>,
+    mode: PlayMode.ORDER,
+    playing: false,
+    playHistory: [] as Array<Music>,
   },
   getters: {
     getMusic(state) {
@@ -34,17 +32,48 @@ const option: Module<PlayList, any> = {
   },
   mutations: {
     setPlayList(state, value: PlayList) {
-      state = value;
+      /**
+       * ! 不能直接替换整个state
+       */
+      state.vol = value.vol;
+      state.currentIndex = value.currentIndex;
+      state.mode = value.mode;
+      state.playHistory = value.playHistory;
+      state.playing = value.playing;
+      state.queue = value.queue;
+    },
+    /**添加音乐至播放列表 */
+    addMusics(state, ...musics: Array<Music>) {
+      // console.log('vol is', state.vol);
+      if (musics.length == 0) {
+        console.warn('add empty musics');
+        return;
+      }
+      state.playing = true;
+      state.queue.push(...musics);
+      state.currentIndex = state.queue.length - 1;
     },
     /**歌曲跳转 */
-    go(state, index: number) {
+    go(state, indexa: number) {
       /**歌单存在长度才有效 */
       if (state.queue.length) {
         const playList = state;
+        let index;
+        /**如果只有一首歌，当作go(0)处理 */
+        if (playList.queue.length == 1) {
+          index = 0;
+        } else {
+          index = indexa;
+        }
         /**下一首 */
         if (index == 1) {
+          playList.playHistory.push(playList.queue[playList.currentIndex]);
+          /**溢出 */
+          if(playList.playHistory.length>100){
+            playList.playHistory.shift();
+          }
           if (playList.mode == PlayMode.LOOP) {
-            /**在audio对象上对其进行判断实现静音 */
+            /**由player内部进行判断，不需要操作 */
             // Vue.set(playList, 'isLoop', !playList.isLoop);
           } else if (playList.mode == PlayMode.ORDER) {
             let newIndex;
@@ -66,11 +95,7 @@ const option: Module<PlayList, any> = {
             // playList.current = playList.queue[playList.currentIndex];
           }
         } else if (index == 0) {
-          /**刷新 */
-          Vue.set(playList, 'current', null);
-          Vue.nextTick(() => {
-            Vue.set(playList, 'current', playList.queue[playList.currentIndex]);
-          });
+          bus.$emit('replay');
         } else if (index == -1) {
           /**根据历史记录回调 */
           const music = state.playHistory.pop();
@@ -88,9 +113,14 @@ const option: Module<PlayList, any> = {
             playList.currentIndex = playList.queue.length - 1;
           }
         }
+        /**播放 */
+        playList.playing = false;
+        Vue.nextTick(() => {
+          playList.playing = true;
+        });
       } else {
         /**歌单中没有歌曲，不执行 */
-        console.warn('playList none', state.queue);
+        console.warn('no music in playList ', state.queue);
       }
     },
   },

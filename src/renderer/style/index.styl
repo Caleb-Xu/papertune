@@ -1,6 +1,7 @@
 @import url('./font/iconfont/iconfont.css');
 @import url('./variables.styl');
 @import url('./annimation.styl');
+@import url('./usefulClass.styl');
 
 @font-face {
   font-family: alibaba;
@@ -13,7 +14,7 @@
   background: var(--background);
   font-family: alibaba;
   text-overflow: ellipsis;
-  user-select none
+  user-select: none;
 }
 
 ::-webkit-scrollbar {
@@ -34,12 +35,10 @@
   background-color: transparent;
 }
 
-button,
-input {
+button, input {
   outline: none;
   border: none;
 }
-
 
 input.form {
   border-bottom: var(--primary) solid 1px !important;
@@ -53,8 +52,7 @@ input.error {
   border: var(--red) solid 1px !important;
 }
 
-button,
-img {
+button, img {
   display: block;
 }
 
@@ -63,10 +61,7 @@ a {
   background: transparent;
 }
 
-ul,
-ol,
-dl,
-li {
+ul, ol, dl, li {
   list-style: none;
 }
 
@@ -86,6 +81,3 @@ li {
   background: transparent;
 }
 
-.transparent {
-  background: transparent;
-}

@@ -1,14 +1,22 @@
 <template>
   <section data-root id="player">
-    <div id="disable-block" v-show="playAble" />
-    <audio id="main-audio" ref="audio" :src="music.src" :loop="isLoop" preload :muted="muted"></audio>
+    <div id="disable-block" v-show="!playAble" />
+    <audio
+      id="main-audio"
+      ref="audio"
+      @error="playErr"
+      :src="music.src"
+      :loop="isLoop"
+      :muted="muted"
+      @ended="go(1)"
+    ></audio>
     <main id="main">
       <div id="left-box" v-if="music!=null">
         <div id="music-info">
-          <img id="music-pic" draggable="false" :src="music.pic || _config.DEFAULT_MUSIC_PIC" />
+          <img id="music-pic" draggable="false" :src="pic || _config.DEFAULT_MUSIC_PIC" />
           <div id="name-and-artist">
-            <div id="music-name">{{music.title}}</div>
-            <div id="artist">{{music.artist}}</div>
+            <div id="music-name" :title="music.title">{{music.title || '未知音乐'}}</div>
+            <div id="artist" :title="music.artist">{{music.artist || '未知歌手'}}</div>
           </div>
           <div id="favor-box">
             <div
@@ -28,9 +36,13 @@
           <div id="previous-icon" class="iconfont icon-previous"></div>
         </button>
         <button id="toggle-play-btn" class="control-btn" @click="togglePlay">
-          <div id="toggle-icon" class="iconfont" :class="[playList.playing?'icon-stop':'icon-play']" />
+          <div
+            id="toggle-icon"
+            class="iconfont"
+            :class="[playList.playing?'icon-stop':'icon-play']"
+          />
         </button>
-        <button id="next-btn" class="control-btn" @click="go(-1)">
+        <button id="next-btn" class="control-btn" @click="go(1)">
           <div id="next-icon" class="iconfont icon-next"></div>
         </button>
         <div id="vol-box">
@@ -47,6 +59,7 @@
       <div id="right-box">
         <div id="play-list-btn-box">
           <div id="play-list-icon" @click="togglePlayList" class="iconfont icon-music-list" />
+          <div id="list-length">{{playList.playHistory.length}}</div>
         </div>
         <div id="play-mode-btn-box">
           <div id="play-mode-btn" @click="togglePlayModeList">{{modeName}}</div>
@@ -110,7 +123,13 @@
 
       #music-info {
         display: flex;
-        box-shadow: var(--shadow);
+        // box-shadow: var(--shadow);
+        transition: all var(--during);
+        cursor: pointer;
+
+        &:hover {
+          box-shadow: var(--shadow);
+        }
 
         #music-pic {
           height: 60px;
@@ -123,11 +142,16 @@
           width: 120px;
           overflow: hidden;
 
+          >* {
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
+          }
+
           #music-name {
             // line-height: 20px;
             font-size: var(--m);
             color: var(--normal);
-            text-overflow: ellipsis;
             margin-top: 5px;
             margin-bottom: 5px;
           }
@@ -151,10 +175,6 @@
             color: var(--red);
             cursor: pointer;
           }
-        }
-
-        &:hover {
-          box-shadow: var(--shadow-hover);
         }
       }
 
@@ -284,6 +304,7 @@
         display: flex;
         justify-content: center;
         align-items: center;
+        position: relative;
 
         #play-list-icon {
           font-size: var(--l);
@@ -292,6 +313,14 @@
           &:hover {
             color: var(--primary);
           }
+        }
+
+        #list-length {
+          position: absolute;
+          right: 5px;
+          bottom: 10px;
+          font-size: var(--m);
+          color: var(--info);
         }
       }
 

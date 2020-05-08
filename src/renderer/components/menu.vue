@@ -17,7 +17,7 @@
             <div class="item" :style="{'line-height':itemHeight+'px'}">
               {{item.text}}
               <span
-                class="iconfont"
+                class="iconfont btn-icon"
                 :class="[item.icon,isDisabled(index) && 'disabled']"
               />
             </div>

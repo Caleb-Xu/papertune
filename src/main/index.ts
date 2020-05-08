@@ -29,6 +29,7 @@ function createMainWindow(win: BrowserWindow | null) {
     webPreferences: {
       nodeIntegration: true,
       webSecurity: false,
+      offscreen: true,
     },
     show: false,
     backgroundColor: '#fff',
