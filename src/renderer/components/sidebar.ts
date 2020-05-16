@@ -2,6 +2,8 @@ import Vue from 'vue';
 import { mapState } from 'vuex';
 import { MenuOption, MenuItem } from '@/renderer/utils/options/menuOption';
 import bus from '@/renderer/bus.ts';
+import { MusicList } from '../utils/music';
+import { getCookie } from '../utils/tools';
 
 enum LIST_INDEX {
   NONE = -2,
@@ -12,24 +14,6 @@ enum LIST_INDEX {
 export default Vue.extend({
   data() {
     return {
-      /**测试数据：用户信息 */
-      userInfo: {
-        uid: 1,
-        //@ts-ignore
-        avatar: this._config.DEFAULT_BOY_AVATAR,
-        name: '风中逆行',
-      },
-      /**测试数据：歌单列表 */
-      musicListList: [
-        {
-          lid: 1,
-          name: '我的歌单1',
-        },
-        {
-          lid: 2,
-          name: '我的歌单2',
-        },
-      ],
       activeList: LIST_INDEX.NONE, //活跃歌单
       activeMenu: LIST_INDEX.NONE,
       LIST_INDEX, //预定义目录
@@ -43,7 +27,17 @@ export default Vue.extend({
     };
   },
   computed: {
-    ...mapState(['isOnline', 'isLogin']),
+    ...mapState(['isOnline', 'isLogin', 'account']),
+    userInfo(): any {
+      return {
+        uid: this.account.uid,
+        name: this.account.name,
+        avatar: this.account.avatar || this._config.DEFAULT_BOY_AVATAR,
+      };
+    },
+    musicLists(): Array<MusicList> {
+      return this.$store.state.musicLists;
+    },
     getUserAvatar(): string {
       return '';
     },
@@ -57,7 +51,7 @@ export default Vue.extend({
        * 根据现有的歌单lid最大者计算得出
        * 没有经过indexedDB，可能不太严谨
        */
-      return this.musicListList[this.musicListList.length - 1].lid + 1;
+      return -1;
     },
     getMusicListMenuItems(): Array<MenuItem> {
       const _this = this;
@@ -104,9 +98,20 @@ export default Vue.extend({
       switch (index) {
         case 'account':
           /* 用户页 */
+          this.$router.push({
+            path: '/accountInfo',
+            query: {
+              uid: this.account.uid,
+            },
+          });
           break;
         case 'login':
           /* 登录页 */
+          bus.$emit('showModal', { type: 'login' });
+          bus.$once('login-reply', () => {
+            //login
+            console.log('login');
+          });
           break;
         case 'reg':
           /**注册页 */
@@ -115,31 +120,30 @@ export default Vue.extend({
     },
     /**打开【本地音乐】页面 */
     openLocalMusic(): void {
-      this.activeList = LIST_INDEX.LOCAL;
+      // this.activeList = LIST_INDEX.LOCAL;
+      this.$router.push('/localList').catch(err => {
+        //
+      });
       ///
     },
     /**打开【我的歌单】页面 */
-    openMusicList(index: number): void {
-      this.activeList = index;
-      if (index == 0) {
-        ///打开【我喜欢】
-      } else {
-        //打开其他歌单
-      }
+    openMusicList(name: string): void {
+      console.log('openMusicList', name);
+      // this.activeList = index;
+      this.$router.push({ path: '/musicList', query: { name: name } });
+      // if (index == 0) {
+      //   ///打开【我喜欢】
+      // } else {
+      //   //打开其他歌单
+      // }
     },
     /**激活歌单菜单 */
-    showListMenu(e: MouseEvent): void {
-      ///
-      const lid =
-        (e.target as Element).getAttribute('data-index') ||
-        this.LIST_INDEX.NONE;
-      this.activeMenu = +lid;
+    showListMenu(name, e: MouseEvent): void {
       const xy = {
         x: e.x,
         y: e.y,
       };
-
-      bus.$emit('showMenu', this.getMusicListMenuOption(+lid, xy));
+      bus.$emit('showMenu', this.getMusicListMenuOption(name, xy));
     },
     /**显示或隐藏新建歌单输入框 */
     toggleAddingMusicList(): void {
@@ -156,7 +160,7 @@ export default Vue.extend({
     addedMusicList(): void {
       /*判断新的歌单名是否会重名 */
       if (
-        this.musicListList.some(({ name }) => {
+        this.musicLists.some(({ name }) => {
           return name == this.newListName;
         })
       ) {
@@ -165,12 +169,13 @@ export default Vue.extend({
       }
 
       // this.toggleAddingMusicList();
-      const newList = {
+      const newList: MusicList = {
         lid: this.getNewLid,
         name: this.newListName,
+        uid: +getCookie('uid'),
       };
       this.toggleAddingMusicList();
-      this.musicListList.push(newList);
+      this.musicLists.push(newList);
       ///
     },
     /**保存编辑歌单 */
@@ -195,11 +200,11 @@ export default Vue.extend({
      * @param index 菜单目录
      * @param lid 作用目标
      */
-    menuReply(index: number, lid) {
-      console.log('reply', index, lid);
+    menuReply(index: number, name) {
+      console.log('reply', index, name);
       let indexInList; //列表中的对应下标
-      for (let i = 0; i < this.musicListList.length; i++) {
-        if (this.musicListList[i].lid == lid) {
+      for (let i = 0; i < this.musicLists.length; i++) {
+        if (this.musicLists[i].name == name) {
           indexInList = i;
           break;
         }
@@ -210,8 +215,8 @@ export default Vue.extend({
         case 1:
           break; //重命名
         case 2:
-          this.musicListList.splice(indexInList, 1);
-          /**同步修改到app.vue */
+          this.musicLists.splice(indexInList, 1);
+          //todo 数据库同步
           ///
           break; //删除歌单
         case 3:

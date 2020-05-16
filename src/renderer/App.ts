@@ -2,20 +2,14 @@ import { MusicFileInfo } from './utils/music';
 import Vue from 'vue';
 import { mapMutations, mapState } from 'vuex';
 import { Account } from 'utils/account';
-import {
-  MusicList,
-  MusicListIndex,
-  Music,
-  PlayList,
-  PlayMode,
-  MusicType,
-} from 'utils/music';
+import { MusicList, Music, PlayList, PlayMode, MusicType } from 'utils/music';
 import { isLocalMusic, readLocalMusicInfo } from 'utils/musicFile';
 import { setSkin } from 'utils/setSkin';
 import bus from './bus';
-import { Notice } from 'utils/others';
 import fs from 'fs';
 import { ipcRenderer } from 'electron';
+import test from 'utils/test';
+import { getCookie } from './utils/tools';
 
 export default Vue.extend({
   data() {
@@ -69,7 +63,7 @@ export default Vue.extend({
      * 初始化数据（重量级）
      * * 关节函数
      */
-    initMounted() {
+    async initMounted() {
       /**获取本地文件夹路径组 */
       const paths = localStorage.getItem('LOCAL_PATHS');
       if (paths) {
@@ -77,9 +71,9 @@ export default Vue.extend({
       }
       if (this._config.SINGLE == false) {
         /**获取下载路径 */
-        const path = localStorage.getItem('DOWNLOAD_PATH');
-        if (path) {
-          this.$store.state.downloadPath = path;
+        const downPath = localStorage.getItem('DOWNLOAD_PATH');
+        if (downPath) {
+          this.$store.state.downloadPath = downPath;
         } else {
           this.$store.state.downloadPath = this._config.DEFAULT_DOWNLOAD_PATH;
           localStorage.setItem(
@@ -90,18 +84,45 @@ export default Vue.extend({
       }
       bus.$emit('getted-paths');
       /**在非单机模式读取登录信息 */
-      const uid = localStorage.getItem('UID');
-      if (uid != null) {
+      /**
+       * todo临时
+       * */
+      // const uid = localStorage.getItem('UID');
+      const uid = getCookie('uid');
+      const token = getCookie('token');
+      if (uid != null && +uid > 0) {
         this.loadIDB(JSON.parse(uid));
       } else {
         this.loadIDB(0);
-        localStorage.setItem('UID', '0');
       }
+
+      const db = await this.getDB();
 
       /**第一次打开时初始化本地文件目录 */
       if (this.firstOpen) {
-        this.createPathsDB();
+        this.createPlayListDB(db);
       }
+
+      setTimeout(() => {
+        this.getPlayList(db);
+      }, 1000);
+    },
+    async createPlayListDB(db: IDBDatabase) {
+      const ONE_PLAY_LIST: PlayList = {
+        queue: [] as Array<Music>,
+        mode: PlayMode.ORDER,
+        // current: null,
+        currentIndex: -1,
+        playing: false,
+        vol: 0.5,
+        playHistory: [],
+      };
+      db
+        .transaction('PLAY_LIST', 'readwrite')
+        .objectStore('PLAY_LIST')
+        .add(ONE_PLAY_LIST).onerror = e => {
+        console.warn('add playList error', e);
+      };
     },
     /**从indexedDB读取用户信息,如果是非本地账号，与云端比较版本
      * * 关键函数
@@ -109,7 +130,7 @@ export default Vue.extend({
     loadIDB(uid: number) {
       //
       console.log('load account', uid);
-      const DBrequest = indexedDB.open('papertune');
+      const DBrequest = indexedDB.open('papertune',2);
       let db: IDBDatabase;
 
       DBrequest.onerror = e => {
@@ -120,6 +141,7 @@ export default Vue.extend({
        * 初始化account表，本地账号歌单表，播放队列表
        */
       DBrequest.onupgradeneeded = e => {
+        console.log('idb upgrading ...');
         const db = (e.target as IDBOpenDBRequest).result;
         this.initIDB(db);
       };
@@ -131,15 +153,14 @@ export default Vue.extend({
         if (this.firstOpen) {
           this.initAccountData(db);
         }
-        /**在联网非单机，又不是本地账号，比较账号数据版本 */
-        if (this.needSync(uid)) {
-          this.syncDB(db, uid);
-        } else {
-          /**不比较，直接用 */
-          this.getAccountData(db, uid);
-        }
-        /**获取播放列表 */
-        this.getPlayList(db);
+        // /**在联网非单机，又不是本地账号，比较账号数据版本 */
+        // if (this.needSync(uid)) {
+        //   this.syncDB(db, uid);
+        // } else {
+        //   /**不比较，直接用 */
+        //   this.getAccountData(db, uid);
+        // }
+        this.getAccountData(db, uid);
       };
     },
     /**初始化数据库 */
@@ -148,8 +169,9 @@ export default Vue.extend({
         db.createObjectStore('ACCOUNT', { keyPath: 'uid' });
 
         db.createObjectStore('MUSIC_LIST', {
-          keyPath: ['lid', 'uid'],
-        }).createIndex('name', 'name');
+          // keyPath: ['lid', 'uid'],  //使用name
+          keyPath: ['name', 'uid'],
+        }); /* .createIndex('name', 'name'); */
 
         db.createObjectStore('PLAY_LIST', { autoIncrement: true });
       }
@@ -171,9 +193,9 @@ export default Vue.extend({
       };
       const FAVOR: MusicList = {
         lid: 0,
-        info: {
-          name: account ? account.name + '的喜欢' : '我喜欢',
-        },
+
+        name: account ? account.name + '的喜欢' : '我喜欢',
+
         list: [] as Array<Music>,
         uid: account?.uid || 0,
       };
@@ -183,31 +205,33 @@ export default Vue.extend({
         .add(FAVOR).onerror = e => {
         console.warn('add musicList error', e);
       };
-      if (!account) {
-        const ONE_PLAY_LIST: PlayList = {
-          queue: [] as Array<Music>,
-          mode: PlayMode.ORDER,
-          // current: null,
-          currentIndex: -1,
-          playing: false,
-          vol: 0.5,
-          playHistory: [],
-        };
-        db
-          .transaction('PLAY_LIST', 'readwrite')
-          .objectStore('PLAY_LIST')
-          .add(ONE_PLAY_LIST).onerror = e => {
-          console.warn('add playList error', e);
-        };
-      }
+      // if (!account) {
+      //   const ONE_PLAY_LIST: PlayList = {
+      //     queue: [] as Array<Music>,
+      //     mode: PlayMode.ORDER,
+      //     // current: null,
+      //     currentIndex: -1,
+      //     playing: false,
+      //     vol: 0.5,
+      //     playHistory: [],
+      //   };
+      //   db
+      //     .transaction('PLAY_LIST', 'readwrite')
+      //     .objectStore('PLAY_LIST')
+      //     .add(ONE_PLAY_LIST).onerror = e => {
+      //     console.warn('add playList error', e);
+      //   };
+      // }
       console.info('IDB init local data finish!');
     },
     /**获取用户信息 */
-    getAccountData(db: IDBDatabase, uid: number) {
+    getAccountData(db: IDBDatabase, uid: number, account?: Account) {
+      console.info('getAccountData...', uid);
       const store = db
         .transaction('MUSIC_LIST', 'readonly')
         .objectStore('MUSIC_LIST');
-      const indexs = [] as Array<MusicListIndex>;
+      /**先不拿列表，打开时再拿 */
+      const indexs = [] as Array<MusicList>;
       store.openCursor().onsuccess = e => {
         const cursor = (e.target as IDBRequest<IDBCursorWithValue | null>)
           .result;
@@ -215,7 +239,9 @@ export default Vue.extend({
           if (cursor.value.uid == uid) {
             indexs.push({
               lid: cursor.value.lid,
-              info: cursor.value.info,
+              name: cursor.value.name,
+              uid: uid,
+              description: cursor.value.description,
             });
             console.info('load list', cursor.value.name);
             /**加载【我喜欢】歌单 */
@@ -226,9 +252,17 @@ export default Vue.extend({
           }
           cursor.continue();
         } else {
-          /**加载完毕，载入到vuex */
-          this.setIndexs(indexs);
-          console.info('load list finish');
+          /**没有拿到时新建数据再拿 */
+          if (indexs.length == 0) {
+            this.initAccountData(db, account);
+            setTimeout(() => this.getAccountData(db, uid), 1000);
+
+            return;
+          } else {
+            /**加载完毕，载入到vuex */
+            this.setIndexs(indexs);
+            console.info('load list finish');
+          }
         }
       };
       const request = db
@@ -241,6 +275,11 @@ export default Vue.extend({
       request.onsuccess = e => {
         console.log('get account', request.result);
         this.setAccount(request.result);
+        if (request.result.uid > 0) {
+          this.$store.state.isLogin = true;
+        } else {
+          this.$store.state.isLogin = false;
+        }
       };
     },
     /**获取播放列表 */
@@ -280,7 +319,7 @@ export default Vue.extend({
           request.onsuccess = () => {
             /**向服务器获取版本信息 */
             this._http
-              .get('/api/client/getVersion?uid=' + uid)
+              .get('http://localhost:4396/client/getVersion?uid=' + uid)
               .then(resp => {
                 if (typeof resp.data == 'number') {
                   const result = resp.data - request.result.updateTime;
@@ -297,7 +336,7 @@ export default Vue.extend({
               })
               .catch(e => {
                 /**临时数据 */
-                console.warn('/api/client/getVersion尚在施工中！');
+                console.warn('http://localhost:4396/client/getVersion尚在施工中！');
                 resolve('none');
               });
           };
@@ -320,20 +359,6 @@ export default Vue.extend({
     },
     /**获取启动时的命令参数 */
     async getMusicArg() {
-      // console.log(readMusicInfo('D:\\MyMusic\\网易云音乐\\任素汐 - 我要你.mp3'))
-
-      // console.log(readMusicInfo(arg))
-      // this._http.get('/nec//lyric?id=33894312').then(resp=>{
-      //   console.log('lrc:',resp.data.lrc.lyric);
-      // })
-      // this._http
-      //   .get(
-      //     'D:\\QQMusic\\QQMusicLyricNew\\Jun Kuroda - SPLASH - 293 - Summerlong EP_qm.lrc'
-      //   )
-      //   .then(resp => {
-      //     console.log('lrc:', resp.data);
-      //   });
-
       /**如果是使用音乐文件打开的,直接播放 */
       const args = require('electron').remote.process.argv;
       console.info('process.argv = ', args);
@@ -343,6 +368,7 @@ export default Vue.extend({
 
       /**没有符合要求的参数时不执行下方操作 */
       if (!arg) {
+        this.$store.getters.getPlayList.playing = false;
         return;
       }
 
@@ -359,51 +385,60 @@ export default Vue.extend({
           isFavor: false,
           ...info,
         };
-        this.$store.commit('addMusics', music);
-        this.$store.getters.getPlayList.playing = true;
+        this.$store.commit('addMusicsAndPlay', [music]);
+        // this.$store.getters.getPlayList.playing = true;
         console.log('正在播放', arg);
       } else {
         console.warn('音乐文件不存在！');
       }
     },
-    /**初始化本地文件库 */
-    createPathsDB() {
-      console.log('create path DB...');
-      const request = indexedDB.open('papertune-local-files');
-      let db: IDBDatabase;
-      request.onupgradeneeded = (e: IDBVersionChangeEvent) => {
-        db = (e.target as IDBRequest).result;
-        const paths = this.getAllPaths;
-        paths.forEach(path => {
-          db.createObjectStore(JSON.stringify(path), { keyPath: 'src' });
-        });
-        console.log('create path db onupgraded!');
-      };
-      request.onsuccess = () => {
-        console.info('create paths db success!');
-      };
-      request.onerror = err => {
-        console.warn('create paths db error', err);
-      };
-    },
+    // /**初始化本地文件库 */
+    // createPathsDB() {
+    //   console.log('create path DB...');
+    //   const request = indexedDB.open('papertune-local-files');
+    //   let db: IDBDatabase;
+    //   request.onupgradeneeded = (e: IDBVersionChangeEvent) => {
+    //     db = (e.target as IDBRequest).result;
+    //     const paths = this.getAllPaths;
+    //     paths.forEach(path => {
+    //       db.createObjectStore(JSON.stringify(path), { keyPath: 'src' });
+    //     });
+    //     console.log('create path db onupgraded!');
+    //   };
+    //   request.onsuccess = () => {
+    //     console.info('create paths db success!');
+    //   };
+    //   request.onerror = err => {
+    //     console.warn('create paths db error', err);
+    //   };
+    // },
     /**检查公告 */
     checkNotice(): void {
       const time = localStorage.getItem('NOTICE_TIME');
+      console.log('checkNotice...', time);
       this._http
-        .get('/api/checkNotice?checkTime=' + time)
+        .get('http://localhost:4396/client/getNotice?time=' + time)
         .then(resp => {
           console.log(resp.data);
-          if (resp.data == false) console.info('最新公告已读');
-          else {
-            const notice: Notice = resp.data;
+
+          // const notice: Notice = resp.data;
+          setTimeout(() => {
             bus.$emit('showModal', {
               type: 'notice',
-              info: notice,
+              info: resp.data,
             });
-          }
+            localStorage.setItem('NOTICE_TIME', Date.now() + '');
+          }, 1000);
         })
-        .catch(() => {
-          console.warn('/api/checkNotice正在搭建中');
+        .catch(error => {
+          // console.warn('/api/checkNotice正在搭建中');
+          if (error.response) {
+            if (error.response.status == 600) {
+              console.warn(error.response.data.msg);
+            }
+          } else {
+            console.log('Error', error.message);
+          }
         });
     },
     /**将数据从IndexedDB上传至服务器 */
@@ -485,6 +520,33 @@ export default Vue.extend({
           break;
       }
     },
+    uploadTest() {
+      const file = (this.$refs['avatar'] as HTMLInputElement).files?.item(
+        0
+      ) as File;
+      console.log(file);
+      const data = new FormData();
+      data.append('avatar', file);
+      data.append('time', Date.now() + '');
+      // const account: Account = {
+      //   uid: 1,
+      //   name: '我',
+      //   motto: '不知道喔',
+      //   updateTime: 1
+      // };
+      const config = {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      };
+
+      this._http
+        .post('http://localhost:4396/client/setAvatar', data, config)
+        .then(resp => {
+          console.log(resp.data);
+        })
+        .catch(err => {
+          console.warn(err);
+        });
+    },
   },
   created() {
     //判断是否联网
@@ -499,6 +561,21 @@ export default Vue.extend({
       await this.saveBeforeDestory();
       ipcRenderer.send('quit');
     });
+
+    /**初始化 */
+    bus.$on('initAccount', async data => {
+      const account: Account = {
+        uid: data.uid,
+        name: data.name,
+      };
+      const db: IDBDatabase = await this.getDB();
+      this.getAccountData(db, data.uid, account);
+      // this.initAccountData(db,account);
+    });
+
+    /** 测试模块 */
+    test();
+    // bus.$on('initAccount', resp.data);
   },
   mounted() {
     console.log('mounted');
@@ -517,5 +594,7 @@ export default Vue.extend({
     player: () => import('components/player.vue'),
     myMenu: () => import('components/menu.vue'), //menu标签已存在
     modals: () => import('components/modals.vue'),
+    msg: () => import('components/common/msg.vue'),
+    playList: () => import('components/playList.vue'),
   },
 });

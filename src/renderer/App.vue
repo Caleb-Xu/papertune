@@ -6,12 +6,16 @@
       <section class="router-view-box">
         <!-- <div id="test">111</div> -->
         <router-view />
+        <playList />
       </section>
     </main>
     <player class="player" />
     <myMenu />
     <modals />
-    <img id='music-data' alt="">
+    <msg />
+    <!-- <div id="test">
+      <input type="file" ref="avatar" @change="uploadTest" />
+    </div> -->
   </div>
 </template>
 
@@ -23,6 +27,7 @@
   flex-direction: column;
   height: 100vh;
   width: 100vw;
+  position: relative;
   overflow: hidden;
 
   .top-nav {
@@ -42,6 +47,7 @@
       flex: 1;
       display: flex;
       z-index: 10;
+      position: relative;
 
       >* {
         /* 填充整个空间 */
@@ -52,6 +58,11 @@
 
   .player {
     height: 100px;
+  }
+
+  #test {
+    position: absolute;
+    z-index: 10000;
   }
 }
 </style>

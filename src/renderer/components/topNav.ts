@@ -79,7 +79,7 @@ export default Vue.extend({
           ipcRenderer.send('closeWin');
         } else if (val == 'no') {
           /**发送到顶级组件，备份数据，在备份完毕后再触发quit */
-          bus.$emit('quit')
+          bus.$emit('quit');
           // ipcRenderer.send('quit');
         }
       } else {
@@ -106,7 +106,21 @@ export default Vue.extend({
     },
     /**搜索内容，触发搜索事件*/
     search() {
-      ///
+      if (this.keyword == '') return;
+      this.$router
+        .push('/')
+        .catch(err => {
+          /*  */
+        })
+        .finally(() => {
+          this.$router.push({
+            path: 'searchInfo',
+            query: { keyword: this.keyword },
+          });
+        });
+    },
+    showDownloadTab(e: MouseEvent) {
+      bus.$emit('showMsg', '正在施工...');
     },
     /**显示菜单 */
     showTopMenu(e: MouseEvent) {

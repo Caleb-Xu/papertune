@@ -1,13 +1,39 @@
 import Vue from 'vue';
 import { Music, MusicType, findMusic } from 'utils/music';
-import { isLocalMusic, readLocalMusicInfo } from 'utils/musicFile';
+import { readLocalMusicInfo } from 'utils/musicFile';
 import fs from 'fs';
 import bus from '../bus';
+import { MenuOption } from '../utils/options/menuOption';
+import { shell } from 'electron';
+
+/**已知缺陷
+ * 搜索性能略低，且结果不稳定
+ */
 
 export default Vue.extend({
   data() {
     return {
       musics: [] as Array<Music>,
+      menuOption: {
+        menuItems: [
+          {
+            index: 0,
+            text: '添加到歌单',
+          },
+          {
+            index: 1,
+            text: '打开文件所在位置',
+          },
+        ],
+        type: 'localList',
+        target: '',
+        xy: {
+          x: 0,
+          y: 0,
+        },
+      } as MenuOption,
+      filter: '',
+      showSearch: false,
     };
   },
   computed: {
@@ -19,27 +45,88 @@ export default Vue.extend({
       // return this.$store.getters.getAllPaths.concat('D:\\MyMusic\\网易云音乐');
       return this.$store.getters.getAllPaths;
     },
-  },
-  methods: {
-    /**跳转到设置页面设置本地路径 */
-    toSetLocalFiles() {
-      this.$router.push('setting/base');
-    },
-    /**获取数据库 */
-    getFilesDB(): Promise<IDBDatabase> {
-      return new Promise((resolve, reject) => {
-        const request = indexedDB.open('papertune-local-files');
-        request.onerror = e => {
-          reject(e);
-        };
-        request.onsuccess = () => {
-          resolve(request.result);
-        };
-        request.onupgradeneeded = e => {
-          const db = (e.target as IDBOpenDBRequest).result;
-        };
+    filtedMusics(): Array<Music> {
+      if (this.filter == '') {
+        return this.musics;
+      }
+      return this.musics.filter(music => {
+        const result = music.title?.search(this.filter);
+        if (result && result > -1) {
+          return true;
+        }
+        // result = music.album?.search(this.filter);
+        // if (result && result > -1) {
+        //   return true;
+        // }
+        // result = music.artist?.search(this.filter);
+        // if (result && result > -1) {
+        //   return true;
+        // }
+        return false;
       });
     },
+  },
+  methods: {
+    playAll() {
+      this.$store.commit('replaceMusicsToPlaylist', this.musics);
+    },
+    search() {
+      this.showSearch = !this.showSearch;
+    },
+    /**关于table的回调 */
+    play(music: Music) {
+      this.$store.commit('addMusicsToPlaylist', [music]);
+      console.log('play', music);
+    },
+    favor(music: Music) {
+      /** 
+       * todo 关联歌单，发送到数据库进行更新
+      */
+      music.isFavor = !music.isFavor;
+      console.log('favor', music);
+      this.$store.dispatch('')
+    },
+    menu(music: Music, e: MouseEvent) {
+      /**唤起菜单 */
+      console.log('menu', music);
+      this.$set(this.menuOption, 'xy', { x: e.x, y: e.y });
+      this.$set(this.menuOption, 'target', music);
+      bus.$emit('showMenu', this.menuOption);
+    },
+    dealMenu(index, music: Music) {
+      switch (index) {
+        case 0:
+          /**添加到歌单
+           * todo 待开发
+           */
+          break;
+        case 1:
+          /**打开文件位置 */
+          shell.showItemInFolder(music.src);
+          break;
+      }
+    },
+    /**跳转到设置页面设置本地路径 */
+    toSetLocalFiles() {
+      this.$router.push('setting/base').catch(err => {
+        //
+      });
+    },
+    // /**获取数据库 */
+    // getFilesDB(): Promise<IDBDatabase> {
+    //   return new Promise((resolve, reject) => {
+    //     const request = indexedDB.open('papertune-local-files');
+    //     request.onerror = e => {
+    //       reject(e);
+    //     };
+    //     request.onsuccess = () => {
+    //       resolve(request.result);
+    //     };
+    //     request.onupgradeneeded = e => {
+    //       const db = (e.target as IDBOpenDBRequest).result;
+    //     };
+    //   });
+    // },
     /**从路径读取音乐文件 */
     async loadLocalMusicFiles() {
       this.getAllPaths.forEach(path => {
@@ -75,16 +162,24 @@ export default Vue.extend({
         });
       });
     },
+    refresh() {
+      this.musics = [];
+      this.loadLocalMusicFiles();
+    },
   },
   created() {
     /**确保拿到了路径数据再进行解析 */
-    bus.$on('getted-paths', this.loadLocalMusicFiles);
+    bus.$on('getted-paths', this.refresh);
+    bus.$on('localListReply', this.dealMenu);
     // this.loadLocalMusicFiles();
   },
   mounted() {
-    //
+    if (this.getAllPaths[0].length > 0) {
+      this.refresh();
+    }
   },
-  components:{
-    musicTable: ()=> import('components/musicTable.vue')
-  }
+
+  components: {
+    musicTable: () => import('components/musicTable.vue'),
+  },
 });

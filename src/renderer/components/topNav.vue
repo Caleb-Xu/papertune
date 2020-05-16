@@ -25,7 +25,13 @@
     </ul>
 
     <section id="search-box" v-if="!_config.SINGLE">
-      <input type="text" v-model.trim="keyword" id="search-input" placeholder="键入搜索..." />
+      <input
+        type="text"
+        @keydown.enter="search"
+        v-model.trim="keyword"
+        id="search-input"
+        placeholder="键入搜索..."
+      />
       <div class="btn-item" id="search-btn">
         <div
           @click="search"
@@ -40,7 +46,7 @@
       <li class="btn-item"></li>
       <li class="btn-item">
         <div
-          @click="showTopMenu"
+          @click.stop="showDownloadTab"
           data-type="downloadTab"
           title="下载列表"
           class="top-btn info-to-normal iconfont icon-icondownload"
@@ -120,12 +126,6 @@
       -webkit-app-region: no-drag;
       // transition: all var(--during);
       // color: var(--info);
-
-      // &:hover {
-      //   color: var(--normal);
-      //   text-shadow: var(--shadow);
-      //   // transform: scale(1.2);
-      // }
     }
   }
 

@@ -1,16 +1,46 @@
 - /client
-  - /getVersion GET 获取服务器中账号版本（用时间戳表示）
+  - /register POST 注册
+    - props
+      - name
+      - password
+      - updateTime 本地生成的时间戳
+    - resp
+      - _number_ 表示uid，-1表示失败
+  - /login POST 登录
+    - props
+      - name
+      - password
+    - resp 
+      - uid
+    - cookie
+      - token
+    - e.msg
+      - ...
+  - /logout POST 登出
+    - props
+      - uid
+    - resp
+      - uid
+    - e.msg
+      - no uid
+      - no login
+  - /checkToken POST 检查并更新token
+    - props
+      - uid
+    - resp
+      - true 
+  - /checkTime GET 获取服务器中账号版本（用时间戳表示）
     - props
       - uid 用户
     - resp
-      - timestamp _number_ 时间戳
+      - _number_ -1表示异常
   - /updateAccountData POST 从本地更新数据到服务器
     - props
       - account _Account_
       - musicListTable _Array<MusicList>_
     - resp
       - ...
-  - /loadAccountData POST 从服务器更新数据到本地
+  - /downLoadAccountData POST 从服务器更新数据到本地
     - props
       - uid
     - resp
@@ -23,3 +53,14 @@
         - title
         - content
       - false 无公告时
+   - /quitClient POST 退出登录 移除token
+     - props
+       - uid
+     - resp
+       - _boolean_
+ - status
+   - 返回错误的状态码是600
+   - token错误的状态码是700
+ - cookie
+   - token httpOnly 30天
+   - uid 30天

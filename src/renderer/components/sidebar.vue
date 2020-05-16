@@ -38,18 +38,18 @@
               @click.stop="showListMenu"
             />-->
           </li>
-          <li class="music-list-item" :index="LIST_INDEX.FAVOR">
+          <!-- <li class="music-list-item" :index="LIST_INDEX.FAVOR">
             <div
               class="music-list-title"
               :class="[activeList== LIST_INDEX.FAVOR && 'active']"
-              @click="openMusicList(LIST_INDEX.FAVOR)"
+              @click="openMusicList(musicLists[LIST_INDEX.FAVOR].name)"
             >我喜欢</div>
             <div
               class="iconfont icon-category music-list-menu-btn"
               :data-index="LIST_INDEX.FAVOR"
               @click.stop="showListMenu"
             />
-          </li>
+          </li> -->
         </ul>
       </section>
 
@@ -66,21 +66,17 @@
             class="iconfont icon-add"
           ></div>
         </header>
-        <ul
-          class="music-list-list"
-          v-if="musicListList.length"
-          :style="{maxHeight:_config.SINGLE?'350px':'240px'}"
-        >
-          <li class="music-list-item" :key="list.lid" v-for="list in musicListList">
+        <ul class="music-list-list" :style="{maxHeight:_config.SINGLE?'350px':'240px'}">
+          <li class="music-list-item" :key="list.id" v-for="list in musicLists">
             <div
               class="music-list-title"
               :class="[activeList== list.lid && 'active']"
-              @click="openMusicList(list.lid)"
+              @click="openMusicList(list.name)"
             >{{list.name}}</div>
             <div
               class="iconfont icon-category music-list-menu-btn"
               :data-index="list.lid"
-              @click.stop="showListMenu"
+              @click.stop="showListMenu(list.name,$event)"
             />
           </li>
           <li class="music-list-item" id="adding-item" v-show="adding">
@@ -120,9 +116,9 @@
             />
           </li>
         </ul>
-        <div v-else id="no-list">
+        <!-- <div v-else id="no-list">
           <div id="no-list-message">点击右上方添加歌单</div>
-        </div>
+        </div>-->
       </section>
     </main>
   </aside>

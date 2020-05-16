@@ -23,13 +23,13 @@ export default {
   DEFAULT_BOY_AVATAR: join(_static, 'image/default-boy-avatar.jpg'),
   DEFAULT_GRIL_AVATAR: join(_static, 'image/default-gril-avatar.jpg'),
   /**默认音乐封面 */
-  DEFAULT_MUSIC_PIC: join(_static,'image/default-music-pic.png'),
+  DEFAULT_MUSIC_PIC: join(_static,'image/default-music-pic.jpg'),
   /**默认本地音乐目录，也是下载目录 */
   // DEFAULT_DOWNLOAD_PATH: join(baseAppUrl,'download/') ,
   /**测试数据 */
-  DEFAULT_DOWNLOAD_PATH: join(baseAppUrl,'download/') ,
+  DEFAULT_DOWNLOAD_PATH: join(baseAppUrl,'download') ,
   /**默认本地缓存目录 */
-  DEFAULT_CACHE_MUSIC: join(baseAppUrl,'cache/') ,
+  DEFAULT_CACHE_MUSIC: join(baseAppUrl,'cache') ,
   /**是否使用单机模式 */
   SINGLE: false,
   /**本地服务器或远程服务器 */

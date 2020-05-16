@@ -23,7 +23,7 @@ module.exports = {
       },
       /**网易云 */
       '/nec': {
-        target: 'http://123.57.229.114:3000/',
+        target: 'http://123.57.229.114:3000',
         pathRewrite: { '^/nec': '' },
       },
     },

@@ -1,8 +1,8 @@
 import Vue from 'vue';
 import bus from '@/renderer/bus';
-import { PlayMode, ModeNames, PlayList, Music } from 'utils/music';
+import { PlayMode, ModeNames, PlayList, Music, MusicType } from 'utils/music';
 import { mapState, mapMutations } from 'vuex';
-import { getMusicPic } from '../utils/musicFile';
+import { getMusicPic } from 'utils/musicFile';
 
 /**
  * * 下午的目标：
@@ -19,7 +19,7 @@ export default Vue.extend({
       modeNames: ModeNames,
       showPlayModeList: false,
       audio: {} as HTMLAudioElement,
-      pic:''
+      pic: '',
     };
   },
   watch: {
@@ -29,12 +29,33 @@ export default Vue.extend({
       this.audio.volume = vol;
     },
     'playList.playing'(bool) {
-      console.log('playing watched',bool);
+      // console.log('playing watched', bool);
       this.$nextTick(() => {
         if (bool == true) {
-          this.audio.play();
+          console.log('playing music:', this.music);
+          this.audio.play().catch(() => {
+            this.audio.play();
+          });
         } else this.audio.pause();
       });
+    },
+    /**切歌触发器
+     * * 关键
+     */
+    async music(val: Music) {
+      /**播放 */
+      this.playList.playing = false;
+      console.info('正在播放：', val.title);
+      if (this.music.type == MusicType.CLOUD) {
+        await this.getCloudMusicSrc(this.music);
+      }
+      this.audio.src = this.music.src;
+      if (this.music.src != null) {
+        this.$nextTick(() => (this.playList.playing = true));
+      } else {
+        this.go(1);
+      }
+      this.setPic();
     },
   },
   computed: {
@@ -60,8 +81,10 @@ export default Vue.extend({
   methods: {
     ...mapMutations(['go']),
     getMusicPic,
-    toMusicPage(){
-      this.$router.push('musicInfo');
+    toMusicPage() {
+      this.$router.push('musicInfo').catch(err => {
+        //
+      });
     },
     /**时长转为时间格式文本 */
     getTimeFormat(num: number): string {
@@ -70,26 +93,29 @@ export default Vue.extend({
       if (num % 60 < 10) return ~~(num / 60) + ':' + '0' + ~~(num % 60);
       else return ~~(num / 60) + ':' + ~~(num % 60);
     },
+    /**audio回调相关 */
     pause() {
       this.playList.playing = false;
     },
     play() {
       this.playList.playing = true;
     },
-    replay(){
+    replay() {
       this.audio.currentTime = 0;
       this.playList.playing = true;
     },
-    playErr(){
-      console.warn('can not play',this.music);
+    playErr() {
+      console.warn('can not play', this.music);
       /**避免重复播放错误歌曲的死循环 */
-      if(this.playList.queue.length>1){
+      if (this.playList.queue.length > 1) {
         this.go(1);
       }
     },
+
     /**更新data中的时间进度，监听timeupdate */
     timeUpdate(e: Event) {
       this.currentTime = (e.target as HTMLAudioElement).currentTime;
+      bus.$emit('timeUpdate', this.currentTime);
     },
     /**播放/暂停 */
     togglePlay() {
@@ -157,21 +183,49 @@ export default Vue.extend({
       this.playList.mode = index;
       this.showPlayModeList = false;
     },
+    /**处理云音乐，获取临时src与歌词，封面 */
+    async getCloudMusicSrc(music: Music) {
+      await this._http('http://123.57.229.114:3000/song/url?id=' + this.music.id)
+        .then(resp => {
+          /**测试 */
+          console.log(resp.data);
+          if (resp.data.code == 200) {
+            try {
+              this.music.src = resp.data.data[0].url;
+              if (this.music.src == null) {
+                throw 'null';
+              }
+              console.log(resp.data.data[0].url);
+            } catch {
+              bus.$emit('showMsg', '无法播放' + music.title + '!');
+
+              this.go(1);
+            }
+          } else {
+            console.warn('无法获取src', resp.data.code);
+          }
+        })
+        .catch(err => {
+          console.warn(err);
+        });
+    },
+    async setPic() {
+      this.pic = (await this.getMusicPic(this.music)) || '';
+    },
+    // getMusicPic(){
+    //   //
+    // }
   },
   created() {
-    bus.$on('replay',this.replay);
+    bus.$on('replay', this.replay);
   },
   mounted() {
     this.audio = this.$refs.audio as HTMLAudioElement;
     this.audio.volume = this.playList.vol;
-    /**切歌触发器，可能有更合适的选择 */
-    this.audio.ondurationchange = async() => {
+    this.audio.ondurationchange = () => {
       this.duration = this.audio.duration;
-      this.pic = await this.getMusicPic(this.music)||'';
     };
-    this.audio.addEventListener('timeupdate', this.timeUpdate);
-    
-    // this.progressBar = this.$el.querySelector('#progress-bar-box') as HTMLElement;
+    this.audio.ontimeupdate = this.timeUpdate;
   },
   components: {
     collapse: () => import('components/common/collapse.ts'),

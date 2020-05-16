@@ -2,19 +2,19 @@ import Vue from 'vue';
 import Vuex, { StoreOptions } from 'vuex';
 import {
   PlayList,
-  MusicListIndex,
   Music,
   MusicListPayload,
   SubmitType,
+  MusicList,
 } from 'utils/music';
 import { Account } from 'utils/account';
 import playList from './playList';
 import config from '@/baseConfig';
 
 /**获取歌单数据库 */
-function getMusicListDB(): Promise<IDBDatabase> {
+function getDB(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open('PLAY_LIST');
+    const request = indexedDB.open('papertune');
     request.onsuccess = () => {
       resolve(request.result);
     };
@@ -36,7 +36,7 @@ const options: StoreOptions<any> = {
       /**登录信息 */
       account: null as Account | null,
       /**歌单索引 */
-      musicLiistIndexs: [] as Array<MusicListIndex>,
+      musicLists: [] as Array<MusicList>,
       /**【我喜欢】歌单的内容，便于显示❤ */
       favorList: [] as Array<Music>,
       /**下载目录 */
@@ -76,8 +76,9 @@ const options: StoreOptions<any> = {
       }
       state.account = value;
     },
-    setIndexs(state, value: Array<MusicListIndex>) {
-      state.musicLiistIndexs = value;
+    setIndexs(state, value: Array<MusicList>) {
+      console.log('setIndexs',value);
+      state.musicLists = value;
     },
   },
   actions: {
@@ -85,7 +86,7 @@ const options: StoreOptions<any> = {
      * * 关键函数，每一次对歌单进行操作时都要调用这个方法
      */
     async modifMusicList(context, payload: MusicListPayload) {
-      const db: IDBDatabase = await getMusicListDB();
+      const db: IDBDatabase = await getDB();
       /**判断是否同步到server */
       const needUpload =
         !config.SINGLE && context.state.isOnline && context.state.isLogin;

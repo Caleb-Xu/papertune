@@ -9,21 +9,45 @@
         <div id="bar-left-box">
           <div id="total-count">
             共
-            <span>{{musics.length}}</span>
+            <span>{{filtedMusics.length}}</span>
             首歌曲
           </div>
-          <div id="play-all-btn" class="shadow-block flex-center" :disabled="!hasMusic">
+          <div
+            id="play-all-btn"
+            @click="playAll"
+            class="shadow-block flex-center"
+            :disabled="!hasMusic"
+          >
             播放全部
             <span class="iconfont icon-play btn-icon"></span>
           </div>
         </div>
         <div id="bar-right-box">
-          <div class="iconfont icon-search info-to-normal" :disabled="!hasMusic"></div>
-          <div class="iconfont icon-viewlist info-to-normal" :disabled="!hasMusic"></div>
+          <section id="search-box">
+            <input type="text" v-show="showSearch" v-model.trim="filter" id="search-input" placeholder="键入搜索..." />
+            <div class="btn-item" id="search-btn">
+              <div
+                @click="search"
+                title="搜索"
+                id="search-btn"
+                class="iconfont icon-search"
+                :disabled="filter"
+              />
+            </div>
+          </section>
+          <div class="iconfont icon-refresh info-to-normal" @click="refresh"></div>
         </div>
       </section>
       <section id="local-list">
-        <musicTable id="list-table" :list="musics" v-if="hasMusic" type="local" />
+        <musicTable
+          id="list-table"
+          @menu="menu"
+          @favor="favor"
+          @play="play"
+          :list="filtedMusics"
+          v-if="hasMusic"
+          type="local"
+        />
         <div id="empty-msg" v-else>当前本地列表为空</div>
       </section>
     </main>
@@ -103,12 +127,27 @@
           color: var(--info);
           margin-left: 10px;
         }
+
+        #search-box {
+          display: flex;
+
+          #search-btn {
+            font-size: var(--l);
+            color: var(--info);
+          }
+
+          input {
+            font-size: var(--s);
+            color: var(--info);
+          }
+        }
       }
     }
 
     #local-list {
-      margin-top: 20px;
+      margin: 20px 0;
       flex: 1;
+      overflow: auto;
 
       #empty-msg {
         text-align: center;
@@ -116,10 +155,6 @@
         color: var(--disabled);
         font-size: var(--l);
       }
-    }
-
-    #table {
-      flex: 1;
     }
   }
 }

@@ -5,25 +5,25 @@ let getStyle, setStyle;
 export default Vue.extend({
   data() {
     return {
-      /**尺寸 */
-      minWidth: 360,
-      minHeight: 200,
-      maxWidth: 540,
-      maxHeight: 300,
+      // /**尺寸 */
+      // minWidth: 360,
+      // minHeight: 200,
+      // maxWidth: 540,
+      // maxHeight: 300,
       /**是否选中checkbox */
       isChecked: false,
     };
   },
   computed: {
-    /**获取尺寸样式 */
-    baseSize(): Record<string, string> {
-      return {
-        'min-width': this.minWidth + 'px',
-        'min-height': this.minHeight + 'px',
-        'max-width': this.maxWidth + 'px',
-        'max-height': this.maxHeight + 'px',
-      };
-    },
+    // /**获取尺寸样式 */
+    // baseSize(): Record<string, string> {
+    //   return {
+    //     'min-width': this.minWidth + 'px',
+    //     'min-height': this.minHeight + 'px',
+    //     'max-width': this.maxWidth + 'px',
+    //     'max-height': this.maxHeight + 'px',
+    //   };
+    // },
   },
   methods: {
     /**方向模态框 */
@@ -40,20 +40,8 @@ export default Vue.extend({
       getStyle = window.getComputedStyle(this.$el);
       setStyle = (this.$el as HTMLElement).style;
       // console.log(e.x, e.y);
-      //指针边界处理，有缺陷，回到窗口后不能跟焦
-      /* 
-      if (
-        e.x <= 100 ||
-        e.x >= this._config.SIZE.WIDTH - 1 ||
-        e.y <= 100 ||
-        e.y > +this._config.SIZE.HEIGHT - 1
-      ) {
-        window.removeEventListener(
-          'mousemove',
-          this.mouseMove
-        );
-        return;
-      } */
+      //todo 指针边界处理，有缺陷，回到窗口后不能跟焦
+
       //模态框边界处理
       if (parseInt(getStyle.left) <= 0 && e.movementX < 0) return;
       else if (parseInt(getStyle.right) <= 0 && e.movementX > 0) return;
@@ -86,7 +74,7 @@ export default Vue.extend({
       (this.$el as HTMLElement).style?.setProperty('--theme', val);
     },
     select(val: string) {
-      console.log('select', this.name);
+      console.log('select', this.name, val);
       this.$emit('close', this.name, val, this.isChecked);
     },
   },

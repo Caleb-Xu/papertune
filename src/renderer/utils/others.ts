@@ -1,4 +1,6 @@
 export interface Notice {
+  nid: number;
   title: string;
-  content: string;
+  text: string;
+  time: number;
 }

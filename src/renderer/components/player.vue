@@ -5,14 +5,13 @@
       id="main-audio"
       ref="audio"
       @error="playErr"
-      :src="music.src"
       :loop="isLoop"
       :muted="muted"
       @ended="go(1)"
     ></audio>
     <main id="main">
       <div id="left-box" v-if="music!=null">
-        <div id="music-info">
+        <div id="music-info" @click="$router.push('musicInfo').catch(err=>{})">
           <img id="music-pic" draggable="false" :src="pic || _config.DEFAULT_MUSIC_PIC" />
           <div id="name-and-artist">
             <div id="music-name" :title="music.title">{{music.title || '未知音乐'}}</div>
@@ -23,7 +22,7 @@
               id="is-favor"
               class="iconfont"
               :class="[music.isFavor?'icon-favorites-filling':'icon-favorites']"
-              @click="music.isFavor = !music.isFavor"
+              @click.stop="music.isFavor = !music.isFavor"
             />
           </div>
         </div>
@@ -59,7 +58,7 @@
       <div id="right-box">
         <div id="play-list-btn-box">
           <div id="play-list-icon" @click="togglePlayList" class="iconfont icon-music-list" />
-          <div id="list-length">{{playList.playHistory.length}}</div>
+          <div id="list-length">{{playList.queue.length}}</div>
         </div>
         <div id="play-mode-btn-box">
           <div id="play-mode-btn" @click="togglePlayModeList">{{modeName}}</div>
@@ -123,9 +122,11 @@
 
       #music-info {
         display: flex;
-        // box-shadow: var(--shadow);
         transition: all var(--during);
         cursor: pointer;
+        width: 260px;
+        position: relative;
+        align-items: center;
 
         &:hover {
           box-shadow: var(--shadow);
@@ -139,8 +140,9 @@
 
         #name-and-artist {
           margin-left: 20px;
-          width: 120px;
+          align-self: stretch;
           overflow: hidden;
+          width: 120px;
 
           >* {
             text-overflow: ellipsis;
@@ -165,11 +167,13 @@
 
         #favor-box {
           width: 40px;
+          right: 10px;
+          position: absolute;
           display: flex;
           justify-content: center;
           align-items: center;
-          margin-right: 10px;
 
+          // margin-right: 10px;
           #is-favor {
             font-size: var(--l);
             color: var(--red);
@@ -319,7 +323,7 @@
           position: absolute;
           right: 5px;
           bottom: 10px;
-          font-size: var(--m);
+          font-size: var(--xs);
           color: var(--info);
         }
       }
@@ -392,6 +396,7 @@
     width: 100%;
     background: transparent;
     display: flex;
+    z-index: 100;
     flex-direction: column;
     justify-content: center;
 

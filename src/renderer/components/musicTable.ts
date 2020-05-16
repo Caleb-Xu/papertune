@@ -1,9 +1,15 @@
-import { MusicList } from 'utils/music';
+/**
+ *  * 该组件只为视图层，所有数据相关的操作均由父组件负责
+ */
+
+import { MusicList, Music } from 'utils/music';
 import Vue from 'vue';
 
 export default Vue.extend({
   data() {
-    return {};
+    return {
+      active: {} as Music,
+    };
   },
   props: {
     /**数据内容 */
@@ -17,5 +23,15 @@ export default Vue.extend({
       type: String,
       default: 'default',
     },
+  },
+  methods: {
+    setActive(music: Music) {
+      this.active = music;
+    },
+  },
+  mounted() {
+    document.onclick = () => {
+      this.active = {} as Music;
+    };
   },
 });

@@ -28,6 +28,7 @@ export async function readLocalMusicInfo(src: string): Promise<MusicFileInfo> {
 
 /**获取歌词 */
 export async function getLyric(music: Music): Promise<string | void> {
+  console.log('getLyric', music.lrc);
   if (music.lrc) {
     /**已拥有 */
     if (music.lrc[0] == '[') {
@@ -53,9 +54,10 @@ export async function getLyric(music: Music): Promise<string | void> {
       console.warn('没有歌词', music);
       return;
     } else if (music.type == MusicType.CLOUD) {
+      console.log('get cloud lrc', music.title);
       /**已拥有 */
       let result;
-      await Axios.get('/nec//lyric?id=' + music.id)
+      await Axios.get('http://123.57.229.114:3000/lyric?id=' + music.id)
         .then(resp => {
           result = resp.data.lrc.lyric;
         })
@@ -90,7 +92,7 @@ export async function getCloudMusicPic(id: number): Promise<string | void> {
     console.warn('getCloudMusicPic with no id', id);
     return;
   }
-  const resp = await Axios.get('nsc/song/detail?ids=' + id);
+  const resp = await Axios.get('nec/song/detail?ids=' + id);
   return resp.data.songs[0].al.picUrl || null;
 }
 

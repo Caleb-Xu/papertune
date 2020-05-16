@@ -13,7 +13,7 @@
         </div>
       </header>
       <main id="modal-body">
-        <slot>
+        <slot id="slot">
           <div id="modal-text">{{text}}</div>
         </slot>
       </main>
@@ -77,12 +77,12 @@
 
   &[data-size='s'] {
     width: 360px;
-    height: 200px;
+    height: 240px;
   }
 
   &[data-size='m'] {
     width: 540px;
-    height: 300px;
+    height: 360px;
   }
 
   #modal-header {
@@ -128,9 +128,13 @@
     padding: 20px;
     overflow-y: auto;
 
-    #modal-text {
-      color: var(--normal);
-      font-size: var(--m);
+    #slot {
+      overflow-y: auto;
+
+      #modal-text {
+        color: var(--normal);
+        font-size: var(--m);
+      }
     }
   }
 

@@ -1,4 +1,4 @@
-import { Music, MusicList } from 'utils/music';
+import { MusicList } from 'utils/music';
 
 /**本地用户信息
  * 为了安全，没有密码
@@ -10,7 +10,7 @@ export interface Account {
   /**用户名 */
   name: string;
   /**性别，true为男false为女 */
-  gender?: boolean;
+  gender?: number;
   /**头像的url */
   avatar?: string;
   /**邮箱 */
@@ -25,12 +25,14 @@ export interface Account {
    * 用于判断数据是否最新
    * 新用户和LOCAL为0
    */
-  updateTime: number;
+  updateTime?: number;
 }
 
 /**同步到服务器的个人信息，整合了歌单信息 */
 export interface NetAccount {
-  info: Account;
+  account: Account;
   password: string;
-  musicListTable: Array<MusicList>;
+  musicLists: Array<MusicList>;
+  /**从account获取 */
+  updateTime: number;
 }

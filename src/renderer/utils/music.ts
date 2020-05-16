@@ -33,6 +33,9 @@ export interface Music {
   duration?: number;
   /**是否添加到【我喜欢】 */
   isFavor: boolean;
+  /**适配字段 */
+  lid?: number;
+  uid?: number;
 }
 
 /**在解析本地音乐文件时使用 */
@@ -47,34 +50,38 @@ export interface MusicFileInfo {
   pic?: string;
 }
 
-export interface MusicListInfo {
-  /**歌单名 */
-  name: string;
-  /**描述 */
-  description?: string;
-  /**封面，路径或编码 */
-  pic?: string;
-}
+// export interface MusicListInfo {
+//   /**歌单名 */
+//   name: string;
+//   /**描述 */
+//   description?: string;
+//   /**封面，路径或编码 */
+//   pic?: string;
+// }
 
 /**歌单 */
 export interface MusicList {
-  /**主键 */
+  /**主键，用于兼容mysql */
   lid: number;
+  /**歌单名 */
+  name: string;
   /**歌曲列表 */
-  list: Array<Music>;
-  info: MusicListInfo;
+  list?: Array<Music>;
+  /**描述 */
+  description?: string;
+  // info: MusicListInfo;
   /**主键，外键，指向拥有歌单的用户 */
   uid: number;
 }
 
-/**歌单索引
- * 避免由于加载歌曲列表带来的性能负担
- * 在用户选择了某一个歌单后加载完整的歌单对象
- */
-export interface MusicListIndex {
-  lid: number;
-  info: MusicListInfo;
-}
+// /**歌单索引
+//  * 避免由于加载歌曲列表带来的性能负担
+//  * 在用户选择了某一个歌单后加载完整的歌单对象
+//  */
+// export interface MusicListIndex {
+//   lid: number;
+//   info: MusicListInfo;
+// }
 
 /**播放列表 */
 export interface PlayList {
@@ -134,11 +141,13 @@ export function findMusic(music: Music, list: Array<Music>): number {
 /**用于表示歌单修改内容的payload */
 export interface MusicListPayload {
   /**目标歌单id */
-  lid?: number;
+  // lid?: number;
+  /**用于识别歌单 */
+  name?: string;
   /**目标歌曲，add或remove时 */
   music?: Music;
   /**目标信息，edit时 */
-  info?: MusicListInfo;
+  description?: string;
   /**目标动作 */
   act: SubmitType;
 }

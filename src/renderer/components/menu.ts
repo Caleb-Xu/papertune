@@ -72,6 +72,7 @@ export default Vue.extend({
         console.error('filterIndex is null', filterIndex);
       }
     },
+    /**是否可用 */
     isDisabled(index: number): boolean {
       return this.itemFilter[index].disbaled || false;
     },
@@ -82,11 +83,7 @@ export default Vue.extend({
      * @param option 相关配置,默认为空对象
      */
     bus.$on('showMenu', (option: MenuOption) => {
-      // console.log(`showMenu type: ${option.type}, option: ${option}`);
       this.menuOption = option;
-      /* this.xy = option.xy;
-      this.menuItems = option.menuItems;
-      this.type = option.type; */
       this.showMenu = false;
 
       this.$nextTick(() => {
