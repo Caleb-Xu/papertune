@@ -6,22 +6,40 @@
           v-for="(item,index) in itemFilter"
           :style="{height:itemHeight+'px'}"
           class="item-box"
-          :key="index+''"
-          @click="select(index)"
+          :key="item.key"
+          @click.stop="select(index)"
         >
           <div
             class="click-box"
-            :class="[isDisabled(index) && 'disabled']"
-            :disabled="isDisabled(index)"
           >
             <div class="item" :style="{'line-height':itemHeight+'px'}">
               {{item.text}}
               <span
                 class="iconfont btn-icon"
-                :class="[item.icon,isDisabled(index) && 'disabled']"
               />
             </div>
           </div>
+
+          <ul v-if="item.subMenu" v-show="item.subShow" class="sub-item-list">
+            <li
+              v-for="(subItem,subIndex) in item.subMenu"
+              :style="{height:itemHeight+'px'}"
+              class="item-box"
+              :key="subItem.key"
+              @click.stop="select(index,subIndex)"
+            >
+              <div
+                class="click-box"
+              >
+                <div class="item" :style="{'line-height':itemHeight+'px'}">
+                  {{subItem.text}}
+                  <span
+                    class="iconfont btn-icon"
+                  />
+                </div>
+              </div>
+            </li>
+          </ul>
         </li>
       </ul>
     </div>
@@ -47,12 +65,21 @@
   overflow: visible;
 
   #item-list {
+    .sub-item-list {
+      position: absolute;
+      right: -120px;
+      z-index: 1001
+      top: 5px;
+      box-shadow: var(--shadow);
+    }
+
     .item-box {
       border-top: 1px var(--disabled) solid;
       color: var(--info);
       box-sizing: border-box;
       font-size: var(--s);
       cursor: pointer;
+      position: relative;
 
       .click-box {
         height: 100%;

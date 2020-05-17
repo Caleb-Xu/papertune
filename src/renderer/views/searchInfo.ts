@@ -1,7 +1,13 @@
 import Vue from 'vue';
-import { Music, MusicType } from '../utils/music';
+import {
+  Music,
+  MusicType,
+  MusicListPayload,
+  SubmitType,
+  findMusic,
+} from '../utils/music';
 import bus from '../bus';
-import { MenuOption } from '../utils/options/menuOption';
+import { MenuOption, MenuItem } from '../utils/options/menuOption';
 
 export default Vue.extend({
   data() {
@@ -11,11 +17,26 @@ export default Vue.extend({
       total: 0,
       pageSize: 30,
       currentPage: 1,
-      menuOption: {
+    };
+  },
+  computed: {
+    menuOption(): MenuOption {
+      const subMenu = [] as Array<MenuItem>;
+      (this.$store.getters.allListNames as Array<string>).forEach(
+        (name, index) => {
+          subMenu.push({
+            index,
+            text: name,
+          });
+        }
+      );
+      return {
         menuItems: [
           {
             index: 0,
             text: '添加到歌单',
+            subMenu: subMenu,
+            subShow: false,
           },
           {
             index: 1,
@@ -27,10 +48,8 @@ export default Vue.extend({
           x: 0,
           y: 0,
         },
-      } as MenuOption,
-    };
-  },
-  computed: {
+      };
+    },
     getParams(): any {
       return {
         keywords: this.keyword,
@@ -56,7 +75,7 @@ export default Vue.extend({
       songs.forEach(song => {
         const music: Music = {
           id: song.id,
-          isFavor: false, //todo 在喜欢歌单中检索
+          isFavor: false,
           src: '',
           // artist: (song.artists as Array<any>).reduce((total, artist) => {
           //   return total + ' ' + artist.name;
@@ -67,6 +86,8 @@ export default Vue.extend({
           duration: song.duration,
           title: song.name,
         };
+        music.isFavor = findMusic(music, this.$store.getters.favorList) != -1;
+        if (music.isFavor) console.log('favored', music.title);
         this.musics.push(music);
       });
     },
@@ -76,11 +97,19 @@ export default Vue.extend({
       this.$store.commit('addMusicsToPlaylist', [music]);
     },
     favor(music: Music) {
-      /**
-       * todo 关联歌单，发送到数据库进行更新
-       */
       music.isFavor = !music.isFavor;
       console.log('favor', music);
+
+      // this.$store.state.favorList.push(music);
+      const payload: MusicListPayload = {
+        act: SubmitType.ADD,
+        music: music,
+        name: this.$store.state.musicLists[0].name,
+      };
+      if (music.isFavor == false) {
+        payload.act = SubmitType.REMOVE;
+      }
+      this.$store.dispatch('modifyMusicList', payload);
     },
     menu(music: Music, e: MouseEvent) {
       /**唤起菜单 */
@@ -89,16 +118,24 @@ export default Vue.extend({
       this.$set(this.menuOption, 'target', music);
       bus.$emit('showMenu', this.menuOption);
     },
-    dealMenu(index, music: Music) {
+    dealMenu(index, music: Music, subIndex: number) {
+      const payload: MusicListPayload = {
+        act: SubmitType.ADD,
+        music: music,
+        name: this.$store.getters.allListNames[subIndex]
+      };
       switch (index) {
         case 0:
-          /**添加到歌单
-           * todo 待开发
-           */
+          /**添加到歌单           */
+
+          if (music.isFavor == false) {
+            payload.act = SubmitType.ADD;
+          }
+          this.$store.dispatch('modifyMusicList', payload);
           break;
         case 1:
           /**播放 */
-
+          this.play(music);
           break;
       }
     },

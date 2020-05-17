@@ -18,20 +18,40 @@
         <section id="tab-bar">
           <ul id="tabs">
             <li id="lists-tab" @click="activeTab=0" class="tab" :class="[activeTab==0 &&'active']">
-              <span>用户歌单</span>
+              <span>我的歌单</span>
             </li>
-            <li id="info-tab" @click="activeTab=1" class="tab" :class="[activeTab==1 &&'active']">
+            <!-- <li id="info-tab" @click="activeTab=1" class="tab" :class="[activeTab==1 &&'active']">
               <span>个人资料</span>
-            </li>
+            </li> -->
           </ul>
           <div id="line"></div>
         </section>
         <section id="views">
           <section id="lists" v-show="activeTab==0">
             <ul id="music-lists">
-              <li class="list" v-for="list in musicLists" :key="list.key">
-                <div class="list-pic"></div>
+              <li class="list" v-for="(list,index) in musicLists" :key="list.key">
+                <div class="list-pic shadow-block" @click="toMusicList(list.name)">
+                  <img
+                    class="pic"
+                    :src="pics[index]"
+                    draggable="false"
+                  />
+                </div>
                 <div class="list-name">{{list.name}}</div>
+              </li>
+              <li class="list">
+                <div class="list-pic shadow-block" id="add-btn" @click="toggleAddMusicList">
+                  <div id="add-icon" class="iconfont icon-add"></div>
+                </div>
+                <div class="list-name adding" v-if="adding==false">添加歌单</div>
+                <input
+                  v-model.trim="newListName"
+                  @keydown.enter="addMusicList"
+                  @keydown.esc="toggleAddMusicList"
+                  class="list-name"
+                  ref="add-input"
+                  v-else
+                />
               </li>
             </ul>
           </section>
@@ -154,6 +174,57 @@
 
           #music-lists {
             width: 100%;
+            display: flex;
+            align-items: center;
+
+            .list {
+              width: 100px;
+              margin: 20px 10px;
+              box-shaodw: var(--shadow);
+
+              &:hover {
+                box-shaodw: var(--shadow-hover);
+              }
+
+              .list-pic {
+                width: 100px;
+                height: @width;
+                overflow: hidden;
+
+                .pic {
+                  width: 100px;
+                  height: auto;
+                  cursor: pointer;
+                }
+              }
+
+              .list-name {
+                margin-top: 5px;
+                color: var(--normal);
+                font-size: var(--s);
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                text-align: center;
+                width: 100px;
+
+                &.adding {
+                  color: var(--info);
+                }
+              }
+
+              #add-btn {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+
+                #add-icon {
+                  color: var(--primary);
+                  font-size: var(--xl);
+                  font-weight: bold;
+                }
+              }
+            }
           }
         }
       }

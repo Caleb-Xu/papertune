@@ -22,7 +22,7 @@
               id="is-favor"
               class="iconfont"
               :class="[music.isFavor?'icon-favorites-filling':'icon-favorites']"
-              @click.stop="music.isFavor = !music.isFavor"
+              @click.stop="favor"
             />
           </div>
         </div>

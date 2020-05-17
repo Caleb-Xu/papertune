@@ -61,7 +61,7 @@ $opacity = 0.6;
   align-self: center;
   position: absolute;
   top: 300px;
-  height: 60px;
+  height: 50px;
   background-color: var(--important);
   opacity: $opacity;
   // display: inline-block;
@@ -70,9 +70,9 @@ $opacity = 0.6;
   padding: 0 10px;
 
   span {
-    font-size: var(--l);
+    font-size: var(--m);
     font-weight: bold;
-    line-height: 60px;
+    line-height: 50px;
     text-align: center;
     color: white;
     background-color: transparent;

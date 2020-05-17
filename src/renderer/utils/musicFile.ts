@@ -8,7 +8,7 @@ import Axios from 'axios';
 
 /**解析本地音乐文件的信息
  * 失败的话将文件名置于title返回
- * * 持久化保存时不保存pic，pic只在需要获取时才计算获取，否则会大量占用磁盘与内存
+ * * 持久化保存时不保存pic，pic只在需要获取时才计算获取，否则会大量占用与内存
  */
 export async function readLocalMusicInfo(src: string): Promise<MusicFileInfo> {
   // new FileReader().readAsDataURL(src)
@@ -92,7 +92,7 @@ export async function getCloudMusicPic(id: number): Promise<string | void> {
     console.warn('getCloudMusicPic with no id', id);
     return;
   }
-  const resp = await Axios.get('nec/song/detail?ids=' + id);
+  const resp = await Axios.get('http://123.57.229.114:3000/song/detail?ids=' + id);
   return resp.data.songs[0].al.picUrl || null;
 }
 

@@ -6,10 +6,13 @@ import {
   MusicListPayload,
   SubmitType,
   MusicList,
+  findMusic,
 } from 'utils/music';
 import { Account } from 'utils/account';
 import playList from './playList';
 import config from '@/baseConfig';
+import axios from 'axios';
+import bus from '../bus';
 
 /**获取歌单数据库 */
 function getDB(): Promise<IDBDatabase> {
@@ -37,14 +40,15 @@ const options: StoreOptions<any> = {
       account: null as Account | null,
       /**歌单索引 */
       musicLists: [] as Array<MusicList>,
-      /**【我喜欢】歌单的内容，便于显示❤ */
-      favorList: [] as Array<Music>,
       /**下载目录 */
       downloadPath: '',
       localPaths: [] as Array<string>,
     };
   },
   getters: {
+    favorList(state): Array<MusicList> {
+      return state.musicLists[0].list;
+    },
     /**根据出生年月获取年龄 */
     getAge(state): number {
       return state.account?.birthYear
@@ -63,6 +67,13 @@ const options: StoreOptions<any> = {
           state.downloadPath as string
         );
     },
+    allListNames(state): Array<string> {
+      const result = [] as Array<string>;
+      state.musicLists.forEach(list => {
+        result.push(list.name);
+      });
+      return result;
+    },
   },
   mutations: {
     setOnline(state, value: boolean) {
@@ -77,25 +88,104 @@ const options: StoreOptions<any> = {
       state.account = value;
     },
     setIndexs(state, value: Array<MusicList>) {
-      console.log('setIndexs',value);
+      console.log('setIndexs', value);
       state.musicLists = value;
+    },
+    addMusic(state, payload: MusicListPayload) {
+      console.log('addmusic');
+      (state.musicLists as Array<MusicList>).forEach((musiclist, index) => {
+        if (musiclist.name == payload.name) {
+          musiclist.list?.push(payload.music as Music);
+          console.log(musiclist.list);
+          console.log('added');
+          // Vue.set(context.state.musicLists, index, musiclist);
+        }
+      });
+    },
+    removeMusic(state, payload: MusicListPayload) {
+      console.log('removemusic');
+      (state.musicLists as Array<MusicList>).forEach((musiclist, index) => {
+        if (musiclist.name == payload.name) {
+          // musiclist.list?.push(payload.music as Music);
+          musiclist.list?.splice(
+            findMusic(payload.music as Music, musiclist.list),
+            1
+          );
+          console.log(musiclist.list);
+          console.log('removed');
+          // Vue.set(context.state.musicLists, index, musiclist);
+        }
+      });
+    },
+    addMusicList(state, payload: MusicListPayload) {
+      console.log('addMusicList');
+      const newList: MusicList = {
+        uid: state.account.uid,
+        name: payload.name || '新歌单' + Date.now(),
+        list: [],
+      };
+      if (payload.lid) {
+        newList.lid = payload.lid;
+      }
+      state.musicLists.push(newList);
     },
   },
   actions: {
     /**修改歌单，与数据库关联
      * * 关键函数，每一次对歌单进行操作时都要调用这个方法
      */
-    async modifMusicList(context, payload: MusicListPayload) {
-      const db: IDBDatabase = await getDB();
+    async modifyMusicList(context, payload: MusicListPayload) {
+      // const db: IDBDatabase = await getDB();
       /**判断是否同步到server */
+      console.log('modifyMusicList', payload);
+      let params;
+      let list;
       const needUpload =
         !config.SINGLE && context.state.isOnline && context.state.isLogin;
       switch (payload.act) {
         case SubmitType.ADD:
           /**添加 */
+
+          // console.log(payload.act, payload.music, payload.name);
+          // db.transaction('MUSIC_LIST','readwrite').objectStore('MUSIC_LIST').put()
+          (context.state.musicLists as Array<MusicList>).forEach(
+            (musiclist, index) => {
+              if (musiclist.name == payload.name) {
+                list = musiclist;
+                // Vue.set(context.state.musicLists, index, musiclist);
+              }
+            }
+          );
+          if (list == null || findMusic(payload.music as Music, list.list) != -1) {
+            return;
+          }
+          context.commit('addMusic', payload);
+          if (needUpload)
+            await axios
+              .post('http://localhost:4396/client/addMusic', {
+                uid: context.state.account.uid,
+                name: payload.name,
+                music: payload.music,
+              })
+              .then(resp => {
+                console.log(resp.data);
+                bus.$emit('showMsg', '音乐已添加至' + payload.name);
+              });
           break;
         case SubmitType.REMOVE:
           /**删除 */
+          context.commit('removeMusic', payload);
+          if (needUpload)
+            await axios
+              .post('http://localhost:4396/client/removeMusic', {
+                uid: context.state.account.uid,
+                name: payload.name,
+                music: payload.music,
+              })
+              .then(resp => {
+                console.log(resp.data);
+                bus.$emit('showMsg', '音乐已从' + payload.name + '删除');
+              });
           break;
         case SubmitType.EDIT:
           /**编辑 */
@@ -105,6 +195,22 @@ const options: StoreOptions<any> = {
           break;
         case SubmitType.CREATE:
           /**创建 */
+          if (needUpload) {
+            await axios
+              .post('http://localhost:4396/client/addMusicList', {
+                uid: context.state.account.uid,
+                name: payload.name,
+              })
+              .then(resp => {
+                // console.log(resp.data);
+                payload.lid = resp.data;
+                context.commit('addMusicList', payload);
+                bus.$emit('showMsg', '歌单 ' + payload.name + '创建成功！');
+              });
+          } else {
+            context.commit('addMusicList', payload);
+            bus.$emit('showMsg', '歌单 ' + payload.name + '创建成功！');
+          }
           break;
       }
       console.log('modifMusicList', payload);

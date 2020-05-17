@@ -25,7 +25,7 @@
           </div>
           <div v-else id="no-lyric-box">
             <div id="no-lyric-msg">本歌曲未有歌词，敬请期待</div>
-            <div id="set-lryic-link">设置歌词-></div>
+            <!-- <div id="set-lryic-link">设置歌词-></div> -->
           </div>
         </div>
       </section>

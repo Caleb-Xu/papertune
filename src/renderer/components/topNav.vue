@@ -9,7 +9,6 @@
           @click="go(-1)"
           title="后退"
           class="top-btn info-to-normal iconfont icon-back"
-          :class="[!canGo(-1)&&'disabled']"
           :disabled="!canGo(-1)"
         />
       </li>
@@ -18,7 +17,6 @@
           @click="go(1)"
           title="前进"
           class="top-btn info-to-normal iconfont icon-more"
-          :class="[!canGo(1)&&'disabled']"
           :disabled="!canGo(1)"
         />
       </li>
@@ -45,12 +43,12 @@
     <ul id="right-button-group">
       <li class="btn-item"></li>
       <li class="btn-item">
-        <div
+        <!-- <div
           @click.stop="showDownloadTab"
           data-type="downloadTab"
           title="下载列表"
           class="top-btn info-to-normal iconfont icon-icondownload"
-        />
+        /> -->
       </li>
       <li class="btn-item"></li>
       <li class="btn-item">

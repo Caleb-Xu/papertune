@@ -1,5 +1,11 @@
 import Vue from 'vue';
-import { Music, MusicType, findMusic } from 'utils/music';
+import {
+  Music,
+  MusicType,
+  findMusic,
+  MusicListPayload,
+  SubmitType,
+} from 'utils/music';
 import { readLocalMusicInfo } from 'utils/musicFile';
 import fs from 'fs';
 import bus from '../bus';
@@ -70,6 +76,10 @@ export default Vue.extend({
     playAll() {
       this.$store.commit('replaceMusicsToPlaylist', this.musics);
     },
+    isFavor(music: Music): boolean {
+      // return this.$store.commit('isFavor',music) ;
+      return findMusic(music, this.$store.state.musicLists[0].list) != -1;
+    },
     search() {
       this.showSearch = !this.showSearch;
     },
@@ -79,12 +89,19 @@ export default Vue.extend({
       console.log('play', music);
     },
     favor(music: Music) {
-      /** 
-       * todo 关联歌单，发送到数据库进行更新
-      */
       music.isFavor = !music.isFavor;
       console.log('favor', music);
-      this.$store.dispatch('')
+
+      // this.$store.state.favorList.push(music);
+      const payload: MusicListPayload = {
+        act: SubmitType.ADD,
+        music: music,
+        name: this.$store.state.musicLists[0].name,
+      };
+      if(music.isFavor==false) {
+        payload.act = SubmitType.REMOVE
+      }
+      this.$store.dispatch('modifyMusicList', payload);
     },
     menu(music: Music, e: MouseEvent) {
       /**唤起菜单 */
@@ -153,7 +170,7 @@ export default Vue.extend({
               ...info,
             };
             /**检查是否包含在我喜欢中 */
-            if (findMusic(music, this.$store.state.favorList) > -1) {
+            if (findMusic(music, this.$store.state.musicLists[0].list) > -1) {
               music.isFavor = true;
             }
             // console.log('music:', music);

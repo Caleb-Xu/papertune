@@ -62,7 +62,7 @@ export interface MusicFileInfo {
 /**歌单 */
 export interface MusicList {
   /**主键，用于兼容mysql */
-  lid: number;
+  lid?: number;
   /**歌单名 */
   name: string;
   /**歌曲列表 */
@@ -141,7 +141,7 @@ export function findMusic(music: Music, list: Array<Music>): number {
 /**用于表示歌单修改内容的payload */
 export interface MusicListPayload {
   /**目标歌单id */
-  // lid?: number;
+  lid?: number;
   /**用于识别歌单 */
   name?: string;
   /**目标歌曲，add或remove时 */

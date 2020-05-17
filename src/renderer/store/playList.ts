@@ -129,6 +129,8 @@ const option: Module<PlayList, any> = {
       state.playHistory = value.playHistory;
       state.playing = value.playing;
       state.queue = value.queue;
+
+      // bus.$emit('showMsg','播放列表替换成功')
     },
     /**添加音乐至播放列表 */
     addMusicsToPlaylist(state, musics: Array<Music>) {
@@ -151,6 +153,7 @@ const option: Module<PlayList, any> = {
       state.queue.push(...musicfilted);
       const nextIndex = state.queue.length - musicfilted.length;
       console.log('add finish', musicfilted);
+      bus.$emit('showMsg', '音乐添加成功');
       to(state, nextIndex);
     },
     replaceMusicsToPlaylist(state, musics: Array<Music>) {

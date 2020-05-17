@@ -59,8 +59,29 @@ export default Vue.extend({
     /**确认选项并返回上级
      * 通过过滤的数组的索引获取未过滤选项组的真正索引
      */
-    select(filterIndex: number) {
+    select(filterIndex: number, subIndex?: number) {
+      console.log('select', filterIndex, subIndex);
+      if (subIndex) {
+        bus.$emit(
+          this.menuOption.type + 'Reply',
+          this.itemFilter[filterIndex].index,
+          this.menuOption.target,
+          subIndex
+        );
+        this.showMenu = false;
+        return;
+      }
       if (filterIndex != null) {
+        /**有子菜单 */
+        if (this.itemFilter[filterIndex].subMenu) {
+          this.$set(
+            this.itemFilter[filterIndex],
+            'subShow',
+            !this.itemFilter[filterIndex].subShow
+          );
+          return;
+        }
+
         console.log('select', this.itemFilter[filterIndex].text);
         bus.$emit(
           this.menuOption.type + 'Reply',

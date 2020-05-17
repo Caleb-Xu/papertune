@@ -109,7 +109,7 @@ export default Vue.extend({
             document.cookie = cookieToken;
             bus.$emit('initAccount', {
               uid: resp.data.uid,
-              name: this.name
+              name: this.name,
             });
             this.$set(this.modalList[index], 'active', false);
             bus.$emit('showMsg','登录成功...');

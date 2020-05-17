@@ -1,6 +1,6 @@
 import Vue from 'vue';
 import bus from '@/renderer/bus';
-import { PlayMode, ModeNames, PlayList, Music, MusicType } from 'utils/music';
+import { PlayMode, ModeNames, PlayList, Music, MusicType, MusicListPayload, SubmitType } from 'utils/music';
 import { mapState, mapMutations } from 'vuex';
 import { getMusicPic } from 'utils/musicFile';
 
@@ -103,6 +103,22 @@ export default Vue.extend({
     replay() {
       this.audio.currentTime = 0;
       this.playList.playing = true;
+    },
+    favor() {
+      const music = this.music;
+      music.isFavor = !music.isFavor;
+      console.log('favor', music);
+
+      // this.$store.state.favorList.push(music);
+      const payload: MusicListPayload = {
+        act: SubmitType.ADD,
+        music: music,
+        name: this.$store.state.musicLists[0].name,
+      };
+      if (music.isFavor == false) {
+        payload.act = SubmitType.REMOVE;
+      }
+      this.$store.dispatch('modifyMusicList', payload);
     },
     playErr() {
       console.warn('can not play', this.music);

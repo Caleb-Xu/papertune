@@ -130,7 +130,7 @@ export default Vue.extend({
     loadIDB(uid: number) {
       //
       console.log('load account', uid);
-      const DBrequest = indexedDB.open('papertune',2);
+      const DBrequest = indexedDB.open('papertune', 2);
       let db: IDBDatabase;
 
       DBrequest.onerror = e => {
@@ -230,25 +230,26 @@ export default Vue.extend({
       const store = db
         .transaction('MUSIC_LIST', 'readonly')
         .objectStore('MUSIC_LIST');
-      /**先不拿列表，打开时再拿 */
       const indexs = [] as Array<MusicList>;
       store.openCursor().onsuccess = e => {
         const cursor = (e.target as IDBRequest<IDBCursorWithValue | null>)
           .result;
         if (cursor) {
           if (cursor.value.uid == uid) {
-            indexs.push({
-              lid: cursor.value.lid,
-              name: cursor.value.name,
-              uid: uid,
-              description: cursor.value.description,
-            });
+            // indexs.push({
+            //   lid: cursor.value.lid,
+            //   name: cursor.value.name,
+            //   uid: uid,
+            //   description: cursor.value.description,
+
+            // });
+            indexs.push(cursor.value);
             console.info('load list', cursor.value.name);
             /**加载【我喜欢】歌单 */
-            if (cursor.value.lid == 0) {
-              console.info('加载【我喜欢】歌单');
-              this.$store.state.favorList = cursor.value.list;
-            }
+            // if (cursor.value.lid == 0) {
+            //   console.info('加载【我喜欢】歌单');
+            //   this.$store.state.favorList = cursor.value.list;
+            // }
           }
           cursor.continue();
         } else {
@@ -260,7 +261,13 @@ export default Vue.extend({
             return;
           } else {
             /**加载完毕，载入到vuex */
-            this.setIndexs(indexs);
+            this.setIndexs(
+              indexs.sort((a, b) => {
+                if (a.lid && b.lid) {
+                  return a?.lid - b?.lid;
+                } else return -1;
+              })
+            );
             console.info('load list finish');
           }
         }
@@ -318,27 +325,32 @@ export default Vue.extend({
           };
           request.onsuccess = () => {
             /**向服务器获取版本信息 */
-            this._http
-              .get('http://localhost:4396/client/getVersion?uid=' + uid)
-              .then(resp => {
-                if (typeof resp.data == 'number') {
-                  const result = resp.data - request.result.updateTime;
-                  if (result > 0) {
-                    resolve('server');
-                  } else if (result < 0) {
-                    resolve('local');
-                  } else {
-                    resolve('none');
-                  }
-                } else {
-                  console.warn('invalid data', resp.data);
-                }
-              })
-              .catch(e => {
-                /**临时数据 */
-                console.warn('http://localhost:4396/client/getVersion尚在施工中！');
-                resolve('none');
-              });
+            // this._http
+            //   .get('http://localhost:4396/client/getVersion?uid=' + uid)
+            //   .then(resp => {
+            //     if (typeof resp.data == 'number') {
+            //       const result = resp.data - request.result.updateTime;
+            //       if (result > 0) {
+            //         resolve('server');
+            //       } else if (result < 0) {
+            //         resolve('local');
+            //       } else {
+            //         resolve('none');
+            //       }
+            //     } else {
+            //       console.warn('invalid data', resp.data);
+            //       resolve('none');
+            //     }
+            //   })
+            //   .catch(e => {
+            //     /**临时数据 */
+            //     console.warn(
+            //       'http://localhost:4396/client/getVersion尚在施工中！'
+            //     );
+            //     resolve('none');
+            //   });
+
+            resolve('none');
           };
         }
       });
@@ -457,6 +469,7 @@ export default Vue.extend({
       return new Promise((reject, resolve) => {
         this.checkDBVersion(db, uid)
           .then(result => {
+            console.log('checkResult:', result);
             switch (result) {
               case 'server':
                 /**服务器领先 */
@@ -470,15 +483,31 @@ export default Vue.extend({
                   resolve();
                 }); //更新服务器上的数据
                 break;
-              case 'none':
-                /**版本一致 */
+              default:
+                console.info('none');
+
                 break;
             }
+            /**版本一致 */
+            resolve();
           })
           .catch(err => {
             console.warn(err);
             reject(err);
           });
+      });
+    },
+    saveAcountInDB(db: IDBDatabase, uid: number): Promise<void> {
+      return new Promise(resolve => {
+        console.log('saveAccountInDB', db, uid);
+        const request = db
+          .transaction('ACCOUNT', 'readwrite')
+          .objectStore('ACCOUNT')
+          .put(this.$store.state.account);
+        request.onsuccess = () => {
+          console.info('account saved');
+          resolve();
+        };
       });
     },
     savePlayList(db: IDBDatabase): Promise<void> {
@@ -497,13 +526,46 @@ export default Vue.extend({
         };
       });
     },
+    saveMusicList(db: IDBDatabase) {
+      const count = this.$store.state.musicLists.length;
+      if (count == 0) return Promise.resolve();
+      (this.$store.state.musicLists as Array<MusicList>).forEach(
+        (musiclist, index) => {
+          const request = db
+            .transaction('MUSIC_LIST', 'readwrite')
+            .objectStore('MUSIC_LIST')
+            .put(musiclist);
+          request.onerror = err => {
+            console.warn('save playList err', err);
+            // reject();
+            return Promise.resolve();
+          };
+          request.onsuccess = () => {
+            console.info('save playList success');
+            if (index == count) {
+              return Promise.resolve();
+            }
+          };
+        }
+      );
+    },
     async saveBeforeDestory(): Promise<void> {
       const db: IDBDatabase = await this.getDB();
       if (this.needSync(this.$store.state.account.uid)) {
-        await this.syncDB(db, this.$store.state.account.uid);
+        this.syncDB(db, this.$store.state.account.uid).catch(err => {
+          /*  */
+        });
+        // console.log('saved');
       }
+      await this.saveAcountInDB(db, this.$store.state.account.uid);
       await this.savePlayList(db);
-      console.info('data saved!');
+      await this.saveMusicList(db);
+      await new Promise(resolve => {
+        setTimeout(() => {
+          console.info('data saved!');
+          resolve();
+        }, 1000);
+      });
       return;
     },
     /**监听键盘 */
@@ -567,6 +629,7 @@ export default Vue.extend({
       const account: Account = {
         uid: data.uid,
         name: data.name,
+        updateTime: Date.now(),
       };
       const db: IDBDatabase = await this.getDB();
       this.getAccountData(db, data.uid, account);

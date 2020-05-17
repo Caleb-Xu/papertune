@@ -23,4 +23,6 @@ export interface MenuItem {
   disbaled?: boolean;
   /**选项是否隐藏 */
   hidden?: boolean;
+  subMenu?: Array<MenuItem>;
+  subShow?: boolean;
 }
