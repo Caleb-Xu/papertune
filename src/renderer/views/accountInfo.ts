@@ -73,7 +73,7 @@ export default Vue.extend({
   },
   created() {
     this.uid = +this.$route.query.uid;
-    if (!this.uid) {
+    if (!this.uid==null) {
       console.warn('error uid', this.uid);
     }
   },

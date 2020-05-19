@@ -1,6 +1,14 @@
 import Vue from 'vue';
 import bus from '@/renderer/bus';
-import { PlayMode, ModeNames, PlayList, Music, MusicType, MusicListPayload, SubmitType } from 'utils/music';
+import {
+  PlayMode,
+  ModeNames,
+  PlayList,
+  Music,
+  MusicType,
+  MusicListPayload,
+  SubmitType,
+} from 'utils/music';
 import { mapState, mapMutations } from 'vuex';
 import { getMusicPic } from 'utils/musicFile';
 
@@ -43,19 +51,25 @@ export default Vue.extend({
      * * 关键
      */
     async music(val: Music) {
-      /**播放 */
-      this.playList.playing = false;
-      console.info('正在播放：', val.title);
-      if (this.music.type == MusicType.CLOUD) {
+      if (val.type == MusicType.CLOUD) {
+        /**获取云音乐src */
         await this.getCloudMusicSrc(this.music);
       }
-      this.audio.src = this.music.src;
-      if (this.music.src != null) {
-        this.$nextTick(() => (this.playList.playing = true));
-      } else {
+      /**没有src就跳过 */
+      if (!val.src) {
         this.go(1);
+        return;
       }
+      this.audio.src = val.src;
+      /**获取封面，异步 */
       this.setPic();
+      if (this.playList.playing == false) {
+        return;
+      } else {
+        this.playList.playing = false;
+
+        this.$nextTick(() => (this.playList.playing = true));
+      }
     },
   },
   computed: {
@@ -143,14 +157,27 @@ export default Vue.extend({
       this.muted = !this.muted;
       this.audio.muted = this.muted;
     },
-    /**控制音量 */
     dragVol(e: MouseEvent) {
-      window.addEventListener('mousemove', this.setVol);
-      window.addEventListener('mouseup', this.dropVol);
-    },
-    dropVol(e: MouseEvent) {
-      window.removeEventListener('mousemove', this.setVol);
-      window.removeEventListener('mouseup', this.dropVol);
+      /**横坐标 */
+      let x = e.offsetX;
+      /**元素宽度 */
+      const width = (e.target as HTMLElement).clientWidth;
+      // /**元素左边界横坐标 */
+      console.log('oldX', x);
+      console.log('width', width);
+      console.log(e.target);
+      const _this = this;
+      function moveVol(e: MouseEvent) {
+        x = x + e.movementX;
+        _this.playList.vol = Math.min(Math.max(x / width, 0), 1);
+        // _this.playList.vol = (e.pageX - left) / width;
+      }
+      function dropVol(e: MouseEvent) {
+        window.removeEventListener('mousemove', moveVol);
+        window.removeEventListener('mouseup', dropVol);
+      }
+      window.addEventListener('mousemove', moveVol);
+      window.addEventListener('mouseup', dropVol);
     },
     setVol(e: MouseEvent) {
       // console.log(e.offsetX);
@@ -177,10 +204,29 @@ export default Vue.extend({
       else if (progress < 0) progress = 0;
       this.currentTime = this.duration * progress;
     },
-    dragProgress(e: MouseEvent) {
+    dragTime(e: MouseEvent) {
+      /**横坐标 */
+      let x = e.offsetX;
+      /**元素宽度 */
+      const width = (e.target as HTMLElement).clientWidth;
+      // /**元素左边界横坐标 */
+      // console.log('oldX', x);
+      // console.log('width', width);
+      // console.log(e.target);
+      const _this = this;
+      function moveTime(e: MouseEvent) {
+        x = x + e.movementX;
+        _this.currentTime = Math.floor((x / width) * _this.audio.duration);
+      }
+      function dropTime(e: MouseEvent) {
+        window.removeEventListener('mousemove', moveTime);
+        window.removeEventListener('mouseup', dropTime);
+        _this.audio.currentTime = _this.currentTime;
+        _this.audio.addEventListener('timeupdate', _this.timeUpdate);
+      }
       this.audio.removeEventListener('timeupdate', this.timeUpdate);
-      window.addEventListener('mousemove', this.moveProgressBar);
-      window.addEventListener('mouseup', this.dropProgress);
+      window.addEventListener('mousemove', moveTime);
+      window.addEventListener('mouseup', dropTime);
     },
     dropProgress(e: MouseEvent) {
       this.setProgress(e);
@@ -201,7 +247,9 @@ export default Vue.extend({
     },
     /**处理云音乐，获取临时src与歌词，封面 */
     async getCloudMusicSrc(music: Music) {
-      await this._http('http://123.57.229.114:3000/song/url?id=' + this.music.id)
+      await this._http(
+        'http://123.57.229.114:3000/song/url?id=' + this.music.id
+      )
         .then(resp => {
           /**测试 */
           console.log(resp.data);
@@ -238,10 +286,10 @@ export default Vue.extend({
   mounted() {
     this.audio = this.$refs.audio as HTMLAudioElement;
     this.audio.volume = this.playList.vol;
-    this.audio.ondurationchange = () => {
+    this.audio.addEventListener('durationchange', () => {
       this.duration = this.audio.duration;
-    };
-    this.audio.ontimeupdate = this.timeUpdate;
+    });
+    this.audio.addEventListener('timeupdate', this.timeUpdate);
   },
   components: {
     collapse: () => import('components/common/collapse.ts'),

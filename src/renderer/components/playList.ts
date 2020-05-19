@@ -17,9 +17,13 @@ export default Vue.extend({
     toggle() {
       this.show = !this.show;
     },
-    to(index){
-      this.$store.commit('to',index);
-    }
+    to(index) {
+      this.$store.commit('to', index);
+    },
+    remove(index) {
+      if (index == this.playList.currentIndex) this.$store.commit('go', 1);
+      this.playList.queue.splice(index, 1);
+    },
   },
   created() {
     bus.$on('togglePlayList', this.toggle);

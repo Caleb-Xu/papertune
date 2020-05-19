@@ -1,21 +1,21 @@
 <template>
   <transition name="playlist">
     <div data-root v-show="show">
-      <ul id="list">
+      <transition-group name="list" id="list" tag="ul">
         <li
           class="music-box"
           v-for="(music,index) in playList.queue"
           :class="[index==playList.currentIndex && 'active']"
-          :key="music.key"
+          :key="music.src+music.id"
           @dblclick="to(index)"
         >
           <div class="music-info">
             <div class="music-title">{{music.title}}</div>
             <div class="music-artist">{{music.artist}}</div>
           </div>
-          <div class="menu-btn iconfont icon-category" />
+          <div class="menu-btn iconfont icon-close" @click="remove(index)" />
         </li>
-      </ul>
+      </transition-group>
     </div>
   </transition>
 </template>
@@ -44,6 +44,8 @@ $width = 250px;
 }
 
 [data-root] {
+  overflow-x: hidden;
+
   * {
     background: transparent;
   }
@@ -57,13 +59,15 @@ $width = 250px;
   overflow-y: auto;
 
   #list {
-    margin-top: 20px;
+    margin: 20px 0;
   }
 
   .music-box {
     height: 40px;
     display: flex;
     align-items: center;
+    cursor: pointer;
+    transition: all var(--during);
 
     &:hover {
       background-color: var(--disabled);

@@ -48,7 +48,7 @@
           data-type="downloadTab"
           title="下载列表"
           class="top-btn info-to-normal iconfont icon-icondownload"
-        /> -->
+        />-->
       </li>
       <li class="btn-item"></li>
       <li class="btn-item">
@@ -130,7 +130,7 @@
   #search-box {
     position: absolute;
     height: 100%;
-    width: 240px;
+    // width: 240px;
     left: 50%;
     transform: translateX(-50%);
     display: flex;
@@ -140,6 +140,14 @@
       font-size: var(--m);
       -webkit-app-region: no-drag;
       color: var(--normal);
+      width: 200px;
+      border-bottom: 2px solid transparent;
+      padding: 5px;
+      box-sizing: border-box;
+
+      &:focus {
+        border-bottom: 2px solid var(--info);
+      }
 
       &::placeholder {
         color: var(--info);

@@ -5,7 +5,7 @@
       <sidebar class="side-bar" />
       <section class="router-view-box">
         <!-- <div id="test">111</div> -->
-        <router-view />
+          <router-view />
         <playList />
       </section>
     </main>
@@ -15,13 +15,17 @@
     <msg />
     <!-- <div id="test">
       <input type="file" ref="avatar" @change="uploadTest" />
-    </div> -->
+    </div>-->
   </div>
 </template>
 
 <script src="./App.ts"/>
 
 <style lang="stylus" scoped>
+// .view-enter-active {
+//   animation: slide-in 0.5s;
+// }
+
 #app {
   display: flex;
   flex-direction: column;
@@ -51,6 +55,7 @@
 
       >* {
         /* 填充整个空间 */
+
         flex: 1;
       }
     }

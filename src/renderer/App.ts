@@ -9,7 +9,7 @@ import bus from './bus';
 import fs from 'fs';
 import { ipcRenderer } from 'electron';
 import test from 'utils/test';
-import { getCookie } from './utils/tools';
+import { getCookie, getDB } from './utils/tools';
 
 export default Vue.extend({
   data() {
@@ -25,11 +25,7 @@ export default Vue.extend({
     },
   },
   methods: {
-    ...mapMutations(['setOnline', 'setAccount', 'setIndexs', 'setPlayList']),
-    needSync(uid): boolean {
-      // console.log('uid =', this.$store.state.account?.uid);
-      return this.isOnline && !this._config.SINGLE && uid != 0;
-    },
+    getDB,
     /**初始化数据（轻量级）
      * * 关键函数
      */
@@ -52,7 +48,6 @@ export default Vue.extend({
         /**如果没有设置，则配置默认项 */
         localStorage.setItem('SINGLE', JSON.stringify(this._config.SINGLE));
       }
-      this.setOnline(navigator.onLine);
       /**设置主题 */
       const theme = localStorage.getItem('THEME');
       if (theme) {
@@ -83,94 +78,82 @@ export default Vue.extend({
         }
       }
       bus.$emit('getted-paths');
-      /**在非单机模式读取登录信息 */
-      /**
-       * todo临时
-       * */
-      // const uid = localStorage.getItem('UID');
-      const uid = getCookie('uid');
-      const token = getCookie('token');
-      if (uid != null && +uid > 0) {
-        this.loadIDB(JSON.parse(uid));
-      } else {
-        this.loadIDB(0);
-      }
 
-      const db = await this.getDB();
-
+      const db = await this.loadIDB(0);
       /**第一次打开时初始化本地文件目录 */
       if (this.firstOpen) {
         this.createPlayListDB(db);
       }
 
-      setTimeout(() => {
-        this.getPlayList(db);
-      }, 1000);
+      this.getPlayList(db);
     },
-    async createPlayListDB(db: IDBDatabase) {
-      const ONE_PLAY_LIST: PlayList = {
-        queue: [] as Array<Music>,
-        mode: PlayMode.ORDER,
-        // current: null,
-        currentIndex: -1,
-        playing: false,
-        vol: 0.5,
-        playHistory: [],
-      };
-      db
-        .transaction('PLAY_LIST', 'readwrite')
-        .objectStore('PLAY_LIST')
-        .add(ONE_PLAY_LIST).onerror = e => {
-        console.warn('add playList error', e);
-      };
+    createPlayListDB(db: IDBDatabase): Promise<void> {
+      return new Promise((resolve, reject) => {
+        const ONE_PLAY_LIST: PlayList = {
+          queue: [] as Array<Music>,
+          mode: PlayMode.ORDER,
+          // current: null,
+          currentIndex: -1,
+          playing: false,
+          vol: 0.5,
+          playHistory: [],
+        };
+        const request = db
+          .transaction('PLAY_LIST', 'readwrite')
+          .objectStore('PLAY_LIST')
+          .add(ONE_PLAY_LIST);
+        request.onerror = e => {
+          console.warn('add playList error', e);
+          reject();
+        };
+        request.onsuccess = () => resolve();
+      });
     },
     /**从indexedDB读取用户信息,如果是非本地账号，与云端比较版本
      * * 关键函数
      */
-    loadIDB(uid: number) {
+    loadIDB(uid: number): Promise<IDBDatabase> {
+      return new Promise((resolve, reject) => {
+        console.log('load account', uid);
+        const DBrequest = indexedDB.open('papertune', 2);
+        let db: IDBDatabase;
+
+        DBrequest.onerror = e => {
+          console.warn('open database error', e);
+          reject();
+        };
+        /**创建/更新数据库，本程序下只会在第一次打开时执行
+         * 初始化account表，本地账号歌单表，播放队列表
+         */
+        DBrequest.onupgradeneeded = e => {
+          console.log('idb upgrading ...');
+          const db = (e.target as IDBOpenDBRequest).result;
+          /**这个一个同步函数 */
+          this.initIDB(db);
+        };
+
+        /**在经历过初始化的情况下插入初始数据 */
+        DBrequest.onsuccess = async () => {
+          db = DBrequest.result;
+          console.log('IDB success! vision =', db.version);
+          if (this.firstOpen) {
+            await this.initAccountData(db);
+          }
+          await this.getAccountData(db, uid);
+          console.info('loadIDB finish');
+          resolve(db);
+        };
+      });
       //
-      console.log('load account', uid);
-      const DBrequest = indexedDB.open('papertune', 2);
-      let db: IDBDatabase;
-
-      DBrequest.onerror = e => {
-        console.warn('open database error', e);
-        return;
-      };
-      /**创建/更新数据库，本程序下只会在第一次打开时执行
-       * 初始化account表，本地账号歌单表，播放队列表
-       */
-      DBrequest.onupgradeneeded = e => {
-        console.log('idb upgrading ...');
-        const db = (e.target as IDBOpenDBRequest).result;
-        this.initIDB(db);
-      };
-
-      /**在经历过初始化的情况下插入初始数据 */
-      DBrequest.onsuccess = () => {
-        db = DBrequest.result;
-        console.log('IDB success! vision =', db.version);
-        if (this.firstOpen) {
-          this.initAccountData(db);
-        }
-        // /**在联网非单机，又不是本地账号，比较账号数据版本 */
-        // if (this.needSync(uid)) {
-        //   this.syncDB(db, uid);
-        // } else {
-        //   /**不比较，直接用 */
-        //   this.getAccountData(db, uid);
-        // }
-        this.getAccountData(db, uid);
-      };
     },
-    /**初始化数据库 */
+    /**初始化数据库,upgrade过程中似乎无法插入数据 */
     initIDB(db: IDBDatabase) {
       if (!db.objectStoreNames.contains('ACCOUNT')) {
         db.createObjectStore('ACCOUNT', { keyPath: 'uid' });
 
         db.createObjectStore('MUSIC_LIST', {
-          // keyPath: ['lid', 'uid'],  //使用name
-          keyPath: ['name', 'uid'],
+          keyPath: ['lid', 'uid'], //使用name
+          // keyPath: ['name', 'uid'],
         }); /* .createIndex('name', 'name'); */
 
         db.createObjectStore('PLAY_LIST', { autoIncrement: true });
@@ -179,133 +162,129 @@ export default Vue.extend({
     },
     /**插入用户数据，并完成初始化 */
     // ? 修改成用户注册通用的方法，如果是本地用户，则初始化播放列表，否则跳过
-    initAccountData(db: IDBDatabase, account?: Account | null) {
-      const LOCAL_ACCOUNT: Account = {
-        uid: 0,
-        name: 'LOCAL',
-        updateTime: Date.now(),
-      };
-      db
-        .transaction('ACCOUNT', 'readwrite')
-        .objectStore('ACCOUNT')
-        .add(account || LOCAL_ACCOUNT).onerror = e => {
-        console.warn('add account error', e);
-      };
-      const FAVOR: MusicList = {
-        lid: 0,
+    initAccountData(db: IDBDatabase, account?: Account | null): Promise<void> {
+      return new Promise((resolve, reject) => {
+        const LOCAL_ACCOUNT: Account = {
+          uid: 0,
+          name: '本地账号',
+          updateTime: Date.now(),
+        };
+        let request = db
+          .transaction('ACCOUNT', 'readwrite')
+          .objectStore('ACCOUNT')
+          .add(account || LOCAL_ACCOUNT);
+        request.onerror = e => {
+          console.warn('add account error', e);
+          reject();
+        };
+        request.onsuccess = () => {
+          const FAVOR: MusicList = {
+            lid: 0,
 
-        name: account ? account.name + '的喜欢' : '我喜欢',
+            name: account ? account.name + '的喜欢' : '我喜欢',
+            list: [] as Array<Music>,
+            uid: account?.uid || 0,
+          };
+          request = db
+            .transaction('MUSIC_LIST', 'readwrite')
+            .objectStore('MUSIC_LIST')
+            .add(FAVOR);
 
-        list: [] as Array<Music>,
-        uid: account?.uid || 0,
-      };
-      db
-        .transaction('MUSIC_LIST', 'readwrite')
-        .objectStore('MUSIC_LIST')
-        .add(FAVOR).onerror = e => {
-        console.warn('add musicList error', e);
-      };
-      // if (!account) {
-      //   const ONE_PLAY_LIST: PlayList = {
-      //     queue: [] as Array<Music>,
-      //     mode: PlayMode.ORDER,
-      //     // current: null,
-      //     currentIndex: -1,
-      //     playing: false,
-      //     vol: 0.5,
-      //     playHistory: [],
-      //   };
-      //   db
-      //     .transaction('PLAY_LIST', 'readwrite')
-      //     .objectStore('PLAY_LIST')
-      //     .add(ONE_PLAY_LIST).onerror = e => {
-      //     console.warn('add playList error', e);
-      //   };
-      // }
-      console.info('IDB init local data finish!');
+          request.onerror = e => {
+            console.warn('add musicList error', e);
+            reject();
+          };
+          request.onsuccess = () => {
+            console.info('IDB init local data finish!');
+            resolve();
+          };
+        };
+      });
     },
     /**获取用户信息 */
-    getAccountData(db: IDBDatabase, uid: number, account?: Account) {
-      console.info('getAccountData...', uid);
-      const store = db
-        .transaction('MUSIC_LIST', 'readonly')
-        .objectStore('MUSIC_LIST');
-      const indexs = [] as Array<MusicList>;
-      store.openCursor().onsuccess = e => {
-        const cursor = (e.target as IDBRequest<IDBCursorWithValue | null>)
-          .result;
-        if (cursor) {
-          if (cursor.value.uid == uid) {
-            // indexs.push({
-            //   lid: cursor.value.lid,
-            //   name: cursor.value.name,
-            //   uid: uid,
-            //   description: cursor.value.description,
-
-            // });
-            indexs.push(cursor.value);
-            console.info('load list', cursor.value.name);
-            /**加载【我喜欢】歌单 */
-            // if (cursor.value.lid == 0) {
-            //   console.info('加载【我喜欢】歌单');
-            //   this.$store.state.favorList = cursor.value.list;
-            // }
-          }
-          cursor.continue();
-        } else {
-          /**没有拿到时新建数据再拿 */
-          if (indexs.length == 0) {
-            this.initAccountData(db, account);
-            setTimeout(() => this.getAccountData(db, uid), 1000);
-
-            return;
+    getAccountData(
+      db: IDBDatabase,
+      uid: number,
+      account?: Account
+    ): Promise<void> {
+      return new Promise((resolve, reject) => {
+        console.info('getAccountData...', uid);
+        const request = db
+          .transaction('ACCOUNT', 'readonly')
+          .objectStore('ACCOUNT')
+          .get(uid);
+        request.onerror = e => {
+          console.warn('get account error', e);
+          reject();
+        };
+        request.onsuccess = e => {
+          console.log('get account', request.result);
+          this.$store.commit('setAccount', request.result);
+          if (request.result.uid > 0) {
+            this.$store.state.isLogin = true;
           } else {
-            /**加载完毕，载入到vuex */
-            this.setIndexs(
-              indexs.sort((a, b) => {
-                if (a.lid && b.lid) {
-                  return a?.lid - b?.lid;
-                } else return -1;
-              })
-            );
-            console.info('load list finish');
+            this.$store.state.isLogin = false;
           }
-        }
-      };
-      const request = db
-        .transaction('ACCOUNT', 'readonly')
-        .objectStore('ACCOUNT')
-        .get(uid);
-      request.onerror = e => {
-        console.warn('get account error', e);
-      };
-      request.onsuccess = e => {
-        console.log('get account', request.result);
-        this.setAccount(request.result);
-        if (request.result.uid > 0) {
-          this.$store.state.isLogin = true;
-        } else {
-          this.$store.state.isLogin = false;
-        }
-      };
+          const store = db
+            .transaction('MUSIC_LIST', 'readonly')
+            .objectStore('MUSIC_LIST');
+          const lists = [] as Array<MusicList>;
+          store.openCursor().onsuccess = e => {
+            const cursor = (e.target as IDBRequest<IDBCursorWithValue | null>)
+              .result;
+            if (cursor) {
+              if (cursor.value.uid == uid) {
+                lists.push(cursor.value);
+                console.info('load list', cursor.value.name);
+              }
+              cursor.continue();
+            } else {
+              /**没有拿到时新建数据再拿 */
+              if (lists.length == 0) {
+                this.initAccountData(db, account);
+                setTimeout(() => this.getAccountData(db, uid), 1000);
+                return;
+              } else {
+                /**加载完毕，载入到vuex */
+                this.$store.commit(
+                  'setMusicLists',
+                  /**歌曲通过lid排序，避免各种bug */
+                  lists.sort((a, b) => {
+                    if (a.lid && b.lid) {
+                      return a?.lid - b?.lid;
+                    } else return -1;
+                  })
+                );
+                console.info('load list finish');
+                resolve();
+              }
+            }
+          };
+        };
+      });
     },
     /**获取播放列表 */
     getPlayList(db: IDBDatabase) {
       //
-      const request = db
-        .transaction('PLAY_LIST', 'readonly')
-        .objectStore('PLAY_LIST')
-        .get(1);
-      request.onerror = e => {
-        console.warn('get PLAY_LIST error', e);
-      };
-      request.onsuccess = e => {
-        console.log('PLAY_LIST.get(1) is', request.result);
-        this.setPlayList(request.result);
-        console.log('get playList', request.result);
-        /**解析启动参数 */
-        this.getMusicArg();
-      };
+      console.info('getting playList...');
+      return new Promise((resolve, reject) => {
+        const request = db
+          .transaction('PLAY_LIST', 'readonly')
+          .objectStore('PLAY_LIST')
+          .get(1);
+        request.onerror = e => {
+          console.warn('get PLAY_LIST error', e);
+        };
+        request.onsuccess = e => {
+          console.log('PLAY_LIST.get(1) is', request.result);
+          this.$store.commit('setPlayList', request.result);
+          console.log('get playList finish', request.result);
+          /**解析启动参数 */
+          this.getMusicArg().then(() => {
+            resolve();
+          });
+        };
+      });
     },
     /**检查版本
      * * 关键函数
@@ -355,20 +334,6 @@ export default Vue.extend({
         }
       });
     },
-    /**获取本地IndexedDB的db对象
-     * 初始化要使用initIDB，这个函数只能简单地获取db
-     */
-    getDB(dbName = 'papertune'): Promise<IDBDatabase> {
-      return new Promise((resolve, reject) => {
-        const request = indexedDB.open(dbName);
-        request.onerror = e => {
-          reject(e);
-        };
-        request.onsuccess = () => {
-          resolve(request.result);
-        };
-      });
-    },
     /**获取启动时的命令参数 */
     async getMusicArg() {
       /**如果是使用音乐文件打开的,直接播放 */
@@ -379,10 +344,13 @@ export default Vue.extend({
       })[0];
 
       /**没有符合要求的参数时不执行下方操作 */
-      if (!arg) {
-        this.$store.getters.getPlayList.playing = false;
-        return;
-      }
+      // if (!arg) {
+      //   setTimeout(
+      //     () => (this.$store.getters.getPlayList.playing = false),
+      //     100
+      //   );
+      //   return;
+      // }
 
       const exists = fs.existsSync(arg);
 
@@ -426,6 +394,7 @@ export default Vue.extend({
     // },
     /**检查公告 */
     checkNotice(): void {
+      if (!this.$store.state.netActive) return;
       const time = localStorage.getItem('NOTICE_TIME');
       console.log('checkNotice...', time);
       this._http
@@ -497,9 +466,9 @@ export default Vue.extend({
           });
       });
     },
-    saveAcountInDB(db: IDBDatabase, uid: number): Promise<void> {
+    saveAcount(db: IDBDatabase, uid: number): Promise<void> {
       return new Promise(resolve => {
-        console.log('saveAccountInDB', db, uid);
+        console.log('saveAccount', db, uid);
         const request = db
           .transaction('ACCOUNT', 'readwrite')
           .objectStore('ACCOUNT')
@@ -526,46 +495,48 @@ export default Vue.extend({
         };
       });
     },
-    saveMusicList(db: IDBDatabase) {
-      const count = this.$store.state.musicLists.length;
-      if (count == 0) return Promise.resolve();
-      (this.$store.state.musicLists as Array<MusicList>).forEach(
-        (musiclist, index) => {
+    saveMusicLists(db: IDBDatabase): Promise<void> {
+      console.info('saveMusicLists...');
+      function saveMusicList(musiclist: MusicList): Promise<void> {
+        return new Promise((resolve, reject) => {
           const request = db
             .transaction('MUSIC_LIST', 'readwrite')
             .objectStore('MUSIC_LIST')
             .put(musiclist);
           request.onerror = err => {
             console.warn('save playList err', err);
-            // reject();
-            return Promise.resolve();
+            reject();
           };
           request.onsuccess = () => {
-            console.info('save playList success');
-            if (index == count) {
-              return Promise.resolve();
-            }
+            resolve();
           };
+        });
+      }
+      return new Promise((resolve, reject) => {
+        const count = this.$store.state.musicLists.length;
+        if (count == 0) {
+          console.warn('no musiclists', this.$store.state.musicLists);
+          reject();
         }
-      );
+        (this.$store.state.musicLists as Array<MusicList>).forEach(async (musicList) => {
+          await saveMusicList(musicList);
+        });
+        console.info('saveMusicLists finish!');
+        resolve();
+      });
     },
-    async saveBeforeDestory(): Promise<void> {
+    async saveIDB(): Promise<void> {
       const db: IDBDatabase = await this.getDB();
-      if (this.needSync(this.$store.state.account.uid)) {
+      if (this.$store.getters.netActive) {
         this.syncDB(db, this.$store.state.account.uid).catch(err => {
           /*  */
         });
         // console.log('saved');
       }
-      await this.saveAcountInDB(db, this.$store.state.account.uid);
+      await this.saveAcount(db, this.$store.state.account.uid);
       await this.savePlayList(db);
-      await this.saveMusicList(db);
-      await new Promise(resolve => {
-        setTimeout(() => {
-          console.info('data saved!');
-          resolve();
-        }, 1000);
-      });
+      await this.saveMusicLists(db);
+      console.info('data all saved!');
       return;
     },
     /**监听键盘 */
@@ -611,20 +582,24 @@ export default Vue.extend({
     },
   },
   created() {
-    //判断是否联网
-    const online = window.navigator.onLine && !this._config.SINGLE;
-    this.setOnline(online);
     this.initCreated();
+    /**对应客户端内的退出选项 */
     bus.$on('quit', async () => {
-      await this.saveBeforeDestory();
+      await this.saveIDB();
       ipcRenderer.send('quit');
     });
+    /**对应托盘的退出选项 */
     ipcRenderer.on('b4Quit', async () => {
-      await this.saveBeforeDestory();
+      await this.saveIDB();
       ipcRenderer.send('quit');
     });
 
-    /**初始化 */
+    /**n分钟保存一次 */
+    setTimeout(() => {
+      setInterval(this.saveIDB, 1000 * 60 * 5);
+    }, 1000 * 60 * 5);
+
+    /**登录操作时启用 */
     bus.$on('initAccount', async data => {
       const account: Account = {
         uid: data.uid,
@@ -643,13 +618,12 @@ export default Vue.extend({
   mounted() {
     console.log('mounted');
 
-    /**初始化数据库
-     * 放在created可能有拖慢启动速度的风险！
-     */
-    this.initMounted();
-
     /**监听全局键盘 */
     document.onkeyup = this.keyup;
+    /**初始化数据库
+     * 异步操作，最后执行，避免程序卡死
+     */
+    this.initMounted();
   },
   components: {
     topNav: () => import('components/topNav.vue'),

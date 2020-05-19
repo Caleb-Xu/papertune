@@ -32,8 +32,8 @@ Vue.use(Vuex);
 const options: StoreOptions<any> = {
   state() {
     return {
-      /**是否在线，根据navigation判断 */
-      isOnline: false as boolean,
+      /**是否在线，根据navigatior判断 */
+      isOnline: navigator.onLine,
       /**是否登录，根据token判断 */
       isLogin: false as boolean,
       /**登录信息 */
@@ -46,6 +46,9 @@ const options: StoreOptions<any> = {
     };
   },
   getters: {
+    netActive(state) {
+      return !config.SINGLE && state.isOnline && state.isLogin;
+    },
     favorList(state): Array<MusicList> {
       return state.musicLists[0].list;
     },
@@ -87,7 +90,7 @@ const options: StoreOptions<any> = {
       }
       state.account = value;
     },
-    setIndexs(state, value: Array<MusicList>) {
+    setMusicLists(state, value: Array<MusicList>) {
       console.log('setIndexs', value);
       state.musicLists = value;
     },
@@ -140,8 +143,8 @@ const options: StoreOptions<any> = {
       console.log('modifyMusicList', payload);
       let params;
       let list;
-      const needUpload =
-        !config.SINGLE && context.state.isOnline && context.state.isLogin;
+      const needUpload = context.getters.netActive;
+        
       switch (payload.act) {
         case SubmitType.ADD:
           /**添加 */

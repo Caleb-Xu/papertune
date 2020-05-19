@@ -1,7 +1,8 @@
 <template>
   <aside id="root">
     <section id="account-box" v-if="!_config.SINGLE && isOnline">
-      <div v-if="isLogin" id="account-info">
+      <!-- <div v-if="netActive"> -->
+      <div v-if="isLogin || !netActive" id="account-info">
         <img id="user-avatar" :src="userInfo.avatar" />
         <div id="name-and-link">
           <div id="user-name" :title="userInfo.name">{{userInfo.name}}</div>
@@ -18,6 +19,8 @@
           <span class="iconfont icon-more" />
         </a>
       </div>
+
+      <!-- <div v-else @click="toPage('account')">本地</div> -->
     </section>
 
     <main id="music-list-section">
@@ -32,24 +35,7 @@
               :class="[activeList== LIST_INDEX.LOCAL && 'active']"
               @click="openLocalMusic"
             >本地音乐</div>
-            <!-- <div
-              class="iconfont icon-category music-list-menu-btn"
-              :data-index="LIST_INDEX.LOCAL"
-              @click.stop="showListMenu"
-            />-->
           </li>
-          <!-- <li class="music-list-item" :index="LIST_INDEX.FAVOR">
-            <div
-              class="music-list-title"
-              :class="[activeList== LIST_INDEX.FAVOR && 'active']"
-              @click="openMusicList(musicLists[LIST_INDEX.FAVOR].name)"
-            >我喜欢</div>
-            <div
-              class="iconfont icon-category music-list-menu-btn"
-              :data-index="LIST_INDEX.FAVOR"
-              @click.stop="showListMenu"
-            />
-          </li> -->
         </ul>
       </section>
 

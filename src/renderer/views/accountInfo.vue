@@ -28,8 +28,8 @@
         </section>
         <section id="views">
           <section id="lists" v-show="activeTab==0">
-            <ul id="music-lists">
-              <li class="list" v-for="(list,index) in musicLists" :key="list.key">
+            <transition-group tag="ul" id="music-lists">
+              <li class="list" v-for="(list,index) in musicLists" :key="list.lid">
                 <div class="list-pic shadow-block" @click="toMusicList(list.name)">
                   <img
                     class="pic"
@@ -53,7 +53,7 @@
                   v-else
                 />
               </li>
-            </ul>
+            </transition-group>
           </section>
           <section id="info" v-show="activeTab==1">info</section>
         </section>

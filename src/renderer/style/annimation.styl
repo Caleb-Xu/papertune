@@ -10,3 +10,38 @@
   }
 }
 
+@keyframes slide-in {
+  from {
+    // transform: translatex(100px);
+    opacity: 0;
+    // position: absolute;
+  }
+
+  to {
+    // transform: translateX(0);
+    opacity: 1;
+    // position: absolute;
+  }
+}
+
+@keyframes slide-out {
+  from {
+    transform: translateX(0);
+    opacity: 0.5;
+  }
+
+  to {
+    transform: translatex(-1000px);
+    opacity: 0;
+  }
+}
+
+/* 组动画 */
+.list-enter, .list-leave-to {
+  opacity: 0;
+  transform: translateX(30px);
+}
+
+.list-complete-leave-active {
+  position: absolute;
+}

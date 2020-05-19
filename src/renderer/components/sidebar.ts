@@ -28,6 +28,9 @@ export default Vue.extend({
   },
   computed: {
     ...mapState(['isOnline', 'isLogin', 'account']),
+    netActive(): boolean {
+      return this.$store.getters.netActive;
+    },
     userInfo(): any {
       return {
         uid: this.account.uid,

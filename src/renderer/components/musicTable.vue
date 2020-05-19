@@ -16,13 +16,14 @@
         </th>
       </tr>
     </thead>
-    <tbody>
+    <transition-group tag="tbody" name="list">
       <tr
         v-for="music in list"
-        :key="music.key"
+        :key="music.src+music.id"
         @click.stop="setActive(music)"
         @click.right="$emit('menu',music,$event)"
         @dblclick="$emit('play', music)"
+        class="music"
         :class="music==active && 'active'"
       >
         <td class="title" :title="music.title">
@@ -54,7 +55,7 @@
           <div>{{music.type==0?'本地':'网易云'}}</div>
         </td>
       </tr>
-    </tbody>
+    </transition-group>
   </table>
 </template>
 
@@ -63,9 +64,11 @@
 <style lang="stylus" scoped>
 [data-root] {
   table-layout: fixed;
+  overflow-x: hidden;
 
   & * {
     background: transparent;
+    overflow-x: hidden;
   }
 
   td, th {
@@ -126,6 +129,7 @@
 
     tr {
       cursor: pointer;
+      transition: all var(--during);
 
       &:hover, &.active {
         background-color: var(--disabled);

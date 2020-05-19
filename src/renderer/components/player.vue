@@ -49,8 +49,10 @@
             <div id="vol-icon" class="iconfont icon-remind" />
           </div>
           <div id="vol-bar" ref="vol-bar" @click="setVol" @mousedown="dragVol">
-            <div id="vol-track" :style="{width: playList.vol*100 + '%'}">
-              <div id="vol-point" />
+            <div id="vol-bg">
+              <div id="vol-track" :style="{width: playList.vol*100 + '%'}">
+                <!-- <div id="vol-point" /> -->
+              </div>
             </div>
           </div>
         </div>
@@ -76,11 +78,10 @@
         </div>
       </div>
     </main>
-    <div id="progress-bar-box" v-show="playAble" @click="setProgress" @mousedown="dragProgress">
-      <div id="progress-bar">
-        <div id="progress-track" :style="{width: (currentTime / duration)*100 + '%' }">
-          <div id="progress-point"></div>
-        </div>
+    <div id="progress-bar-box" v-show="playAble" @click="setProgress" @mousedown="dragTime">
+      <div id="progress-bar" ref="progress">
+        <div id="progress-track" :style="{width: (currentTime / duration)*100 + '%' }"></div>
+        <!-- <div id="progress-thumb" :style="{left: (currentTime / duration)*100 + '%' }"></div> -->
       </div>
     </div>
   </section>
@@ -263,36 +264,48 @@
         #vol-bar {
           width: 80px;
           height: 4px;
-          background: var(--disabled);
+          border-top: 10px solid transparent;
+          border-bottom: @border-top;
+          background: transparent;
           display: flex;
           cursor: pointer;
 
           &:hover {
-            #vol-track {
-              background: var(--primary);
-
-              #vol-point {
+            #vol-bg {
+              #vol-track {
                 background: var(--primary);
-                visibility: visible;
+
+                #vol-point {
+                  background: var(--primary);
+                  visibility: visible;
+                }
               }
             }
           }
 
-          #vol-track {
-            // width: 100%;
-            background: var(--info);
+          // position: relative;
+          #vol-bg {
+            width: 80px;
+            background-color: var(--disabled);
             position: relative;
-          }
 
-          #vol-point {
-            $size = 8px;
-            position: absolute;
-            right: -($size / 2) + 2px;
-            top: @right;
-            height: $size;
-            width: $size;
-            background: var(--info);
-            visibility: hidden;
+            #vol-track {
+              background: var(--info);
+              position: absolute;
+              height: 4px;
+
+              #vol-point {
+                $size = 8px;
+                position: absolute;
+                top: 0;
+                right: -($size / 2) + 2px;
+                top: @right;
+                height: $size;
+                width: $size;
+                background: var(--info);
+                visibility: hidden;
+              }
+            }
           }
         }
       }
@@ -406,13 +419,17 @@
       #progress-track {
         box-shadow: 0 0 2px var(--info);
       }
+
+      #progress-thumb {
+        display: block;
+      }
     }
 
     #progress-bar {
       $height = 4px;
       display: flex;
       height: $height;
-      background: var(--info);
+      background: var(--disabled);
       display: flex;
 
       #progress-track {
@@ -420,15 +437,17 @@
         background: var(--primary);
         width: 200px;
         position: relative;
+      }
 
-        #progress-point {
-          position: absolute;
-          height: 10px;
-          width: @height;
-          top: -(@height / 2) + ($height / 2);
-          right: -(@width / 2) + ($height / 2);
-          background: var(--primary);
-        }
+      #progress-thumb {
+        position: absolute;
+        height: 10px;
+        width: @height;
+        top: (@height / 4) + ($height / 2);
+        // right: -(@width / 2) + ($height / 2);
+        background: var(--primary);
+        display: none;
+        // visibility: hidden;
       }
     }
   }
