@@ -52,8 +52,8 @@
             class="iconfont icon-add"
           ></div>
         </header>
-        <ul class="music-list-list" :style="{maxHeight:_config.SINGLE?'350px':'240px'}">
-          <li class="music-list-item" :key="list.id" v-for="list in musicLists">
+        <ul class="music-list-list">
+          <li class="music-list-item" @click.right.stop="showListMenu(list.lid,$event)"  :key="list.lid" v-for="list in musicLists">
             <div
               class="music-list-title"
               :class="[activeList== list.lid && 'active']"
@@ -62,44 +62,20 @@
             <div
               class="iconfont icon-category music-list-menu-btn"
               :data-index="list.lid"
-              @click.stop="showListMenu(list.name,$event)"
+              @click.stop="showListMenu(list.lid,$event)"
             />
           </li>
-          <li class="music-list-item" id="adding-item" v-show="adding">
+          <li class="music-list-item" id="adding-item" v-show="adding || editing">
             <input
               id="new-list-input"
               type="text"
-              :class="[newListError&&'error']"
+              ref = 'add-input'
               v-model="newListName"
-              @blur="addedMusicList"
+              @keydown.enter="submit"
+              @blur="cancel"
               placeholder="输入歌单名"
             />
             <div class="iconfont icon-close music-list-menu-btn" @click="toggleAddingMusicList"></div>
-            <tip
-              type="error"
-              id="new-list-error-tip"
-              :message="errorMessage"
-              v-show="newListError"
-              @close="newListError = !newListError"
-            />
-          </li>
-          <li class="music-list-item" id="editing-item" v-show="editing">
-            <input
-              id="new-list-input"
-              type="text"
-              :class="[newListError&&'error']"
-              v-model="editListName"
-              @blur="editedMusicList"
-              placeholder="输入歌单名"
-            />
-            <div class="iconfont icon-close music-list-menu-btn" @click="toggleEditingMusicList"></div>
-            <tip
-              type="error"
-              id="new-list-error-tip"
-              :message="errorMessage"
-              v-show="newListError"
-              @close="newListError = !newListError"
-            />
           </li>
         </ul>
         <!-- <div v-else id="no-list">

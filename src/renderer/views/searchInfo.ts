@@ -80,11 +80,16 @@ export default Vue.extend({
           // artist: (song.artists as Array<any>).reduce((total, artist) => {
           //   return total + ' ' + artist.name;
           // }),//todo 优雅地显示歌手
-          artist: song.artists[0].name,
+          artist: (song.artists as any[])
+            .map(artist => {
+              return artist.name;
+            })
+            .join(', '),
           album: song.album.name,
           type: MusicType.CLOUD,
           duration: song.duration,
           title: song.name,
+          fee: song.fee == 1,
         };
         music.isFavor = findMusic(music, this.$store.getters.favorList) != -1;
         if (music.isFavor) console.log('favored', music.title);
@@ -119,25 +124,26 @@ export default Vue.extend({
       bus.$emit('showMenu', this.menuOption);
     },
     dealMenu(index, music: Music, subIndex: number) {
-      const payload: MusicListPayload = {
-        act: SubmitType.ADD,
-        music: music,
-        name: this.$store.getters.allListNames[subIndex]
-      };
+      console.log('dealMenu', index, music, subIndex);
+
       switch (index) {
         case 0:
           /**添加到歌单           */
-
-          if (music.isFavor == false) {
-            payload.act = SubmitType.ADD;
-          }
-          this.$store.dispatch('modifyMusicList', payload);
+          this.addMusic(music, subIndex);
           break;
         case 1:
           /**播放 */
           this.play(music);
           break;
       }
+    },
+    addMusic(music: Music, index: number) {
+      const payload: MusicListPayload = {
+        act: SubmitType.ADD,
+        music: music,
+        name: this.$store.getters.allListNames[index],
+      };
+      this.$store.dispatch('modifyMusicList', payload);
     },
     getData() {
       this._http

@@ -22,18 +22,22 @@
             </li>
             <!-- <li id="info-tab" @click="activeTab=1" class="tab" :class="[activeTab==1 &&'active']">
               <span>个人资料</span>
-            </li> -->
+            </li>-->
           </ul>
           <div id="line"></div>
         </section>
         <section id="views">
           <section id="lists" v-show="activeTab==0">
-            <transition-group tag="ul" id="music-lists">
+            <ul id="music-lists">
               <li class="list" v-for="(list,index) in musicLists" :key="list.lid">
-                <div class="list-pic shadow-block" @click="toMusicList(list.name)">
+                <div
+                  class="list-pic shadow-block"
+                  @click.right="showListMenu(list.lid,$event)"
+                  @click="toMusicList(list.name)"
+                >
                   <img
                     class="pic"
-                    :src="pics[index]"
+                    :src="pics[index] || _config.DEFAULT_MUSIC_PIC"
                     draggable="false"
                   />
                 </div>
@@ -47,13 +51,13 @@
                 <input
                   v-model.trim="newListName"
                   @keydown.enter="addMusicList"
-                  @keydown.esc="toggleAddMusicList"
+                  @blur="toggleAddMusicList"
                   class="list-name"
                   ref="add-input"
                   v-else
                 />
               </li>
-            </transition-group>
+            </ul>
           </section>
           <section id="info" v-show="activeTab==1">info</section>
         </section>

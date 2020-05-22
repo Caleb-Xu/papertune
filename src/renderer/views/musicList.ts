@@ -9,6 +9,7 @@ export default Vue.extend({
   data() {
     return {
       listName: '',
+      lid: -1,
       pic: '',
       menuOption: {
         menuItems: [
@@ -36,12 +37,14 @@ export default Vue.extend({
       for (let i = 0; i < musicLists.length; i++) {
         if (musicLists[i].name == this.listName) {
           console.info('get musiclist');
-
           return musicLists[i];
         }
       }
       console.warn('no musiclist');
       return {} as MusicList;
+    },
+    listReverse(): Array<Music> {
+      return [...(this.musicList.list as Array<Music>)].reverse() || [];
     },
     length(): number {
       return this.musicList.list?.length || 0;
@@ -59,6 +62,12 @@ export default Vue.extend({
         });
       }
     },
+    musicList(val){
+      if(!val.name){
+        this.$router.push('/');
+        //
+      }
+    }
   },
   methods: {
     /**关于table的回调 */
@@ -113,35 +122,6 @@ export default Vue.extend({
           break;
       }
     },
-    // async getList() {
-    //   console.info('get list...');
-    //   const db = await getDB();
-    //   const request = db
-    //     .transaction('MUSIC_LIST', 'readonly')
-    //     .objectStore('MUSIC_LIST')
-    //     .openCursor();
-    //   request.onsuccess = e => {
-    //     const cursor = (e.target as IDBRequest<IDBCursorWithValue | null>)
-    //       .result;
-    //     // console.log('find list...');
-    //     if (cursor) {
-    //       console.log('cursor:', cursor.value);
-    //       /**锁定歌单 */
-    //       if (cursor.value.uid == this.$store.state.account.uid) {
-    //         // console.log(111);
-    //         if (cursor.value.name == this.listName) {
-    //           //
-    //           this.list = cursor.value.list;
-    //           console.log('load list ok');
-    //           return;
-    //         }
-    //       }
-    //       cursor.continue();
-    //     } else {
-    //       console.log('no such list');
-    //     }
-    //   };
-    // },
   },
   async created() {
     bus.$on('musicListReply', this.dealMenu);
@@ -150,8 +130,9 @@ export default Vue.extend({
     this.listName = this.$route.query.name as string;
     if (this.musicList?.list && this.musicList.list[0]) {
       this.pic =
-        (await getMusicPic(this.musicList.list[this.musicList.list.length-1])) ||
-        this._config.DEFAULT_MUSIC_PIC;
+        (await getMusicPic(
+          this.musicList.list[this.musicList.list.length - 1]
+        )) || this._config.DEFAULT_MUSIC_PIC;
     }
     // this.getList();
   },

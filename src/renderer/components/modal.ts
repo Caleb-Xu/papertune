@@ -74,15 +74,14 @@ export default Vue.extend({
       (this.$el as HTMLElement).style?.setProperty('--theme', val);
     },
     select(val: string) {
+      console.log('???')
       console.log('select', this.name, val);
       this.$emit('close', this.name, val, this.isChecked);
     },
   },
   mounted() {
     this.setTheme();
-  },
-  created() {
-    window.onkeydown = (e: KeyboardEvent) => {
+    (this.$el as HTMLElement).onkeydown = (e: KeyboardEvent) => {
       switch (e.keyCode) {
         case 13:
           this.select('yes');

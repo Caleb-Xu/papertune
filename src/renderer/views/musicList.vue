@@ -39,7 +39,7 @@
             @menu="menu"
             @favor="favor"
             @play="play"
-            :list="musicList.list"
+            :list="listReverse"
             v-if="length>0"
           />
           <div id="empty-msg" v-else>当前列表为空</div>

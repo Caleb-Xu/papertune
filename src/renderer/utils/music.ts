@@ -36,6 +36,8 @@ export interface Music {
   /**适配字段 */
   lid?: number;
   uid?: number;
+  /**是否为付费音乐 */
+  fee?: boolean;
 }
 
 /**在解析本地音乐文件时使用 */

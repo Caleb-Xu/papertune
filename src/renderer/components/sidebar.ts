@@ -2,12 +2,10 @@ import Vue from 'vue';
 import { mapState } from 'vuex';
 import { MenuOption, MenuItem } from '@/renderer/utils/options/menuOption';
 import bus from '@/renderer/bus.ts';
-import { MusicList } from '../utils/music';
-import { getCookie } from '../utils/tools';
+import { MusicList, MusicListPayload, SubmitType } from '../utils/music';
 
 enum LIST_INDEX {
-  NONE = -2,
-  LOCAL = -1,
+  NONE = -1,
   FAVOR = 0,
 }
 
@@ -16,14 +14,11 @@ export default Vue.extend({
     return {
       activeList: LIST_INDEX.NONE, //活跃歌单
       activeMenu: LIST_INDEX.NONE,
-      LIST_INDEX, //预定义目录
       adding: false, //是否正在新建歌单
-      editListName: '',
       editing: false, //是否正在编辑歌单
-      editListError: false, //编辑的歌单名是否会报错
+      editingList: -1,
       newListName: '',
-      newListError: false, //新的歌单名是否会报错
-      errorMessage: '',
+      LIST_INDEX,
     };
   },
   computed: {
@@ -33,16 +28,13 @@ export default Vue.extend({
     },
     userInfo(): any {
       return {
-        uid: this.account.uid,
-        name: this.account.name,
-        avatar: this.account.avatar || this._config.DEFAULT_BOY_AVATAR,
+        uid: this.account?.uid || 0,
+        name: this.account?.name || '加载中...',
+        avatar: this.account?.avatar || this._config.DEFAULT_BOY_AVATAR,
       };
     },
     musicLists(): Array<MusicList> {
       return this.$store.state.musicLists;
-    },
-    getUserAvatar(): string {
-      return '';
     },
     /**新建菜单名 */
     computedNewListName(): string {
@@ -54,7 +46,9 @@ export default Vue.extend({
        * 根据现有的歌单lid最大者计算得出
        * 没有经过indexedDB，可能不太严谨
        */
-      return -1;
+      return (
+        (this.musicLists[this.musicLists.length - 1] as MusicList).lid || -1
+      );
     },
     getMusicListMenuItems(): Array<MenuItem> {
       const _this = this;
@@ -75,13 +69,6 @@ export default Vue.extend({
           text: '删除歌单',
           icon: 'icon-delete',
           hidden: _this.activeMenu == LIST_INDEX.FAVOR, //“我喜欢”歌单不能删除
-        },
-        {
-          index: 3,
-          text: '下载歌单',
-          icon: 'icon-icondownload',
-          hidden: _this._config.SINGLE, //单机版隐藏
-          disbaled: !this.isOnline, //断网不可用
         },
       ];
     },
@@ -134,29 +121,36 @@ export default Vue.extend({
       console.log('openMusicList', name);
       // this.activeList = index;
       this.$router.push({ path: '/musicList', query: { name: name } });
-      // if (index == 0) {
-      //   ///打开【我喜欢】
-      // } else {
-      //   //打开其他歌单
-      // }
     },
     /**激活歌单菜单 */
-    showListMenu(name, e: MouseEvent): void {
+    showListMenu(lid, e: MouseEvent): void {
       const xy = {
         x: e.x,
         y: e.y,
       };
-      bus.$emit('showMenu', this.getMusicListMenuOption(name, xy));
+      this.activeMenu = lid;
+      bus.$emit('showMenu', this.getMusicListMenuOption(lid, xy));
     },
     /**显示或隐藏新建歌单输入框 */
     toggleAddingMusicList(): void {
+      this.editing = false;
       this.adding = !this.adding;
       if (this.adding) {
         this.newListName = this.computedNewListName; //新的赋值
-        const input: HTMLInputElement | null = this.$el.querySelector(
-          'input#new-list-input'
-        );
+        const input = this.$refs['add-input'] as HTMLInputElement;
         this.$nextTick(() => input?.focus());
+      }
+    },
+    cancel() {
+      this.editing = false;
+      this.editingList = -1;
+      this.adding = false;
+    },
+    submit() {
+      if (this.editing) {
+        this.editedMusicList();
+      } else if (this.adding) {
+        this.addedMusicList();
       }
     },
     /**保存新建歌单 */
@@ -167,68 +161,95 @@ export default Vue.extend({
           return name == this.newListName;
         })
       ) {
-        this.showTip('duplicate');
+        bus.$emit('showMsg', '已拥有歌单：' + this.newListName);
         return;
       }
 
       // this.toggleAddingMusicList();
-      const newList: MusicList = {
-        lid: this.getNewLid,
+      const payload: MusicListPayload = {
+        act: SubmitType.CREATE,
+        lid: (this.musicLists[this.musicLists.length - 1].lid as number) + 1,
         name: this.newListName,
-        uid: +getCookie('uid'),
       };
+      this.$store.dispatch('modifyMusicList', payload);
       this.toggleAddingMusicList();
-      this.musicLists.push(newList);
       ///
     },
     /**保存编辑歌单 */
     editedMusicList() {
-      ///
+      /*判断新的歌单名是否会与其他歌单重名 */
+      if (
+        this.musicLists.some(({ name, lid }) => {
+          if (lid == this.editingList) {
+            return false;
+          }
+          return name == this.newListName;
+        })
+      ) {
+        bus.$emit('showMsg', '已拥有歌单：' + this.newListName);
+        return;
+      }
+      const payload: MusicListPayload = {
+        act: SubmitType.EDIT,
+        lid: this.editingList,
+        name: this.newListName,
+      };
+      this.$store.dispatch('modifyMusicList', payload);
+      this.toggleEditingMusicList(-1);
     },
-    toggleEditingMusicList() {
-      ///
+    toggleEditingMusicList(lid) {
+      this.adding = false;
+      this.editing = !this.editing;
+      if (this.editing) {
+        this.newListName = this.musicLists[lid].name;
+        this.editingList = lid;
+        const input = this.$refs['add-input'] as HTMLInputElement;
+        this.$nextTick(() => input?.focus());
+      } else {
+        this.editingList = -1;
+      }
     },
     /**显示提示 */
     showTip(keyword: string): void {
       console.log('showTip');
-      const delay = 3000;
-      this.newListError = true;
       switch (keyword) {
         case 'duplicate':
-          this.errorMessage = '歌单名重复！';
           break;
       }
+      bus.$emit('showMsg', '歌单名重复！');
     },
     /**菜单回调
      * @param index 菜单目录
      * @param lid 作用目标
      */
-    menuReply(index: number, name) {
-      console.log('reply', index, name);
-      let indexInList; //列表中的对应下标
-      for (let i = 0; i < this.musicLists.length; i++) {
-        if (this.musicLists[i].name == name) {
-          indexInList = i;
-          break;
-        }
-      }
+    menuReply(index: number, lid) {
+      console.log('reply', index, lid);
+      const payload = {} as MusicListPayload;
       switch (index) {
         case 0:
+          for (let i = 0; i < this.musicLists.length; i++) {
+            if (this.musicLists[i].lid == lid) {
+              this.$store.commit(
+                'replaceMusicsToPlaylist',
+                this.musicLists[i].list
+              );
+              break;
+            }
+          }
           break; //播放歌单
         case 1:
+          this.editingList = lid;
+          this.toggleEditingMusicList(lid);
           break; //重命名
         case 2:
-          this.musicLists.splice(indexInList, 1);
-          //todo 数据库同步
+          payload.act = SubmitType.DROP;
+          payload.lid = lid;
+          this.$store.dispatch('modifyMusicList', payload);
           ///
           break; //删除歌单
         case 3:
           break; //下载歌单
       }
-    },
-    /**测试函数 */
-    test(info) {
-      console.log(info);
     },
   },
   created() {

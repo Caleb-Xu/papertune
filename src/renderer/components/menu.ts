@@ -112,11 +112,13 @@ export default Vue.extend({
       });
       console.log(this.showMenu);
     });
+  },
+  mounted() {
     /**点击关闭菜单 */
     window.onclick = () => {
       this.showMenu = false;
     };
-    window.onkeydown = (e: KeyboardEvent) => {
+    (this.$el as HTMLElement).onkeydown = (e: KeyboardEvent) => {
       switch (e.keyCode) {
         case 13:
         case 27:

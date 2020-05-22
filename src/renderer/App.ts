@@ -115,7 +115,7 @@ export default Vue.extend({
     loadIDB(uid: number): Promise<IDBDatabase> {
       return new Promise((resolve, reject) => {
         console.log('load account', uid);
-        const DBrequest = indexedDB.open('papertune', 2);
+        const DBrequest = indexedDB.open('papertune');
         let db: IDBDatabase;
 
         DBrequest.onerror = e => {
@@ -241,8 +241,9 @@ export default Vue.extend({
             } else {
               /**没有拿到时新建数据再拿 */
               if (lists.length == 0) {
-                this.initAccountData(db, account);
-                setTimeout(() => this.getAccountData(db, uid), 1000);
+                this.initAccountData(db, account)
+                  .then(() => this.getAccountData(db, uid))
+                  .then(resolve);
                 return;
               } else {
                 /**加载完毕，载入到vuex */
@@ -252,7 +253,7 @@ export default Vue.extend({
                   lists.sort((a, b) => {
                     if (a.lid && b.lid) {
                       return a?.lid - b?.lid;
-                    } else return -1;
+                    } else return 1;
                   })
                 );
                 console.info('load list finish');
@@ -502,13 +503,20 @@ export default Vue.extend({
           const request = db
             .transaction('MUSIC_LIST', 'readwrite')
             .objectStore('MUSIC_LIST')
-            .put(musiclist);
-          request.onerror = err => {
-            console.warn('save playList err', err);
-            reject();
-          };
+            .clear();
           request.onsuccess = () => {
-            resolve();
+            const request = db
+              .transaction('MUSIC_LIST', 'readwrite')
+              .objectStore('MUSIC_LIST')
+              .put(musiclist);
+
+            request.onerror = err => {
+              console.warn('save playList err', err);
+              reject();
+            };
+            request.onsuccess = () => {
+              resolve();
+            };
           };
         });
       }
@@ -518,9 +526,11 @@ export default Vue.extend({
           console.warn('no musiclists', this.$store.state.musicLists);
           reject();
         }
-        (this.$store.state.musicLists as Array<MusicList>).forEach(async (musicList) => {
-          await saveMusicList(musicList);
-        });
+        (this.$store.state.musicLists as Array<MusicList>).forEach(
+          async musicList => {
+            await saveMusicList(musicList);
+          }
+        );
         console.info('saveMusicLists finish!');
         resolve();
       });
@@ -552,33 +562,6 @@ export default Vue.extend({
           }
           break;
       }
-    },
-    uploadTest() {
-      const file = (this.$refs['avatar'] as HTMLInputElement).files?.item(
-        0
-      ) as File;
-      console.log(file);
-      const data = new FormData();
-      data.append('avatar', file);
-      data.append('time', Date.now() + '');
-      // const account: Account = {
-      //   uid: 1,
-      //   name: '我',
-      //   motto: '不知道喔',
-      //   updateTime: 1
-      // };
-      const config = {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      };
-
-      this._http
-        .post('http://localhost:4396/client/setAvatar', data, config)
-        .then(resp => {
-          console.log(resp.data);
-        })
-        .catch(err => {
-          console.warn(err);
-        });
     },
   },
   created() {

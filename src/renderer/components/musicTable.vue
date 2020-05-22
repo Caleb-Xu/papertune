@@ -16,31 +16,37 @@
         </th>
       </tr>
     </thead>
-    <transition-group tag="tbody" name="list">
+    <!-- <transition-group tag="tbody" name="list"> -->
+    <tbody>
       <tr
         v-for="music in list"
         :key="music.src+music.id"
-        @click.stop="setActive(music)"
-        @click.right="$emit('menu',music,$event)"
-        @dblclick="$emit('play', music)"
+        @click="!music.fee && setActive(music)"
+        @click.right="!music.fee && $emit('menu',music,$event)"
+        @dblclick="music.fee?cannotPlay():$emit('play', music)"
         class="music"
-        :class="music==active && 'active'"
+        :class="[music==active && 'active', music.fee && 'fee']"
+        :disabled="music.fee"
       >
         <td class="title" :title="music.title">
           <div class="title-box">
             <div class="title-name">{{music.title}}</div>
             <div
               title="喜欢"
-              @click="$emit('favor',music)"
+              @click="!music.fee && $emit('favor',music)"
               class="iconfont is-favor"
               :class="music.isFavor?'icon-favorites-filling':'icon-favorites'"
             />
           </div>
           <div class="btn-box">
-            <div title="播放" @click="$emit('play', music)" class="btn iconfont icon-play" />
+            <div
+              title="播放"
+              @click="!music.fee && $emit('play', music)"
+              class="btn iconfont icon-play"
+            />
             <div
               title="菜单"
-              @click="$emit('menu',music,$event)"
+              @click="!music.fee && $emit('menu',music,$event)"
               class="btn iconfont icon-viewgallery"
             />
           </div>
@@ -55,7 +61,8 @@
           <div>{{music.type==0?'本地':'网易云'}}</div>
         </td>
       </tr>
-    </transition-group>
+    </tbody>
+    <!-- </transition-group> -->
   </table>
 </template>
 
@@ -131,6 +138,12 @@
       cursor: pointer;
       transition: all var(--during);
 
+      &.fee {
+        background: var(--disabled) !important;
+        color: var(--info) !important;
+        cursor: not-allowed !important;
+      }
+
       &:hover, &.active {
         background-color: var(--disabled);
       }
@@ -150,6 +163,7 @@
               margin-right: 10px;
               overflow: hidden;
               text-overflow: ellipsis;
+              max-width: 260px;
               // flex: 1;
             }
 
@@ -164,9 +178,10 @@
 
           .btn-box {
             display: flex;
+            margin-right: 10px;
 
             .btn {
-              margin-right: 10px;
+              margin-right: 5px;
 
               &:hover {
                 color: var(--primary);

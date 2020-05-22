@@ -96,20 +96,24 @@ const options: StoreOptions<any> = {
     },
     addMusic(state, payload: MusicListPayload) {
       console.log('addmusic');
-      (state.musicLists as Array<MusicList>).forEach((musiclist, index) => {
-        if (musiclist.name == payload.name) {
-          musiclist.list?.push(payload.music as Music);
-          console.log(musiclist.list);
-          console.log('added');
-          // Vue.set(context.state.musicLists, index, musiclist);
-        }
-      });
+      if (payload.lid != null || payload.name != null) {
+        (state.musicLists as Array<MusicList>).forEach((musiclist, index) => {
+          if (musiclist.name == payload.name || musiclist.lid == payload.lid) {
+            musiclist.list?.push(payload.music as Music);
+            console.log(musiclist.list);
+            console.log('added');
+            bus.$emit('showMsg', '音乐已添加至【' + musiclist.name + '】');
+          }
+        });
+      } else {
+        console.warn('addmusic without name or lid');
+        return;
+      }
     },
     removeMusic(state, payload: MusicListPayload) {
       console.log('removemusic');
-      (state.musicLists as Array<MusicList>).forEach((musiclist, index) => {
-        if (musiclist.name == payload.name) {
-          // musiclist.list?.push(payload.music as Music);
+      (state.musicLists as Array<MusicList>).forEach(musiclist => {
+        if (musiclist.name == payload.name || musiclist.lid == payload.lid) {
           musiclist.list?.splice(
             findMusic(payload.music as Music, musiclist.list),
             1
@@ -117,106 +121,100 @@ const options: StoreOptions<any> = {
           console.log(musiclist.list);
           console.log('removed');
           // Vue.set(context.state.musicLists, index, musiclist);
+          bus.$emit('showMsg', '音乐已从【' + musiclist.name + '】删除');
         }
       });
     },
+    removeMusicList(state, payload: MusicListPayload) {
+      if (payload.lid && payload.lid > 0) {
+        (state.musicLists as MusicList[]).forEach((musiclist, index) => {
+          if (musiclist.lid == payload.lid) {
+            const [list] = (state.musicLists as MusicList[]).splice(index, 1);
+            bus.$emit('showMsg', '【' + list.name + '】删除成功！');
+          }
+        });
+      } else {
+        console.warn('no lid in payload', payload.lid);
+        return;
+      }
+    },
+    editMusicList(state, payload: MusicListPayload) {
+      //
+      console.log('editMusicList');
+      if (payload.lid != null) {
+        const musiclist = state.musicLists[payload.lid] as MusicList;
+        if (payload.name && payload.name.length > 0) {
+          musiclist.name = payload.name;
+        }
+        if (payload.description && payload.description.length > 0) {
+          musiclist.description = payload.description;
+        }
+
+        bus.$emit('showMsg', '修改成功！');
+      } else {
+        console.warn('no lid in payload', payload.lid);
+        return;
+      }
+    },
     addMusicList(state, payload: MusicListPayload) {
       console.log('addMusicList');
+      if (!payload.name) {
+        bus.$emit('showMsg', '歌单名不能为空');
+        return;
+      }
+      if (
+        (state.musicLists as Array<MusicList>).some(list => {
+          if (list.name == payload.name) {
+            return true;
+          }
+          return false;
+        })
+      ) {
+        bus.$emit('showMsg', '歌单名重复');
+        return;
+      }
       const newList: MusicList = {
         uid: state.account.uid,
-        name: payload.name || '新歌单' + Date.now(),
+        name: payload.name,
         list: [],
+        lid: state.musicLists[state.musicLists.length - 1].lid + 1,
       };
-      if (payload.lid) {
-        newList.lid = payload.lid;
-      }
       state.musicLists.push(newList);
+      bus.$emit('showMsg', '歌单【' + payload.name + '】创建成功！');
     },
   },
   actions: {
     /**修改歌单，与数据库关联
      * * 关键函数，每一次对歌单进行操作时都要调用这个方法
      */
-    async modifyMusicList(context, payload: MusicListPayload) {
-      // const db: IDBDatabase = await getDB();
-      /**判断是否同步到server */
+    modifyMusicList(context, payload: MusicListPayload) {
       console.log('modifyMusicList', payload);
-      let params;
-      let list;
-      const needUpload = context.getters.netActive;
-        
+      // const needUpload = context.getters.netActive;
+      const dbName = 'MUSIC_LIST';
       switch (payload.act) {
         case SubmitType.ADD:
           /**添加 */
-
           // console.log(payload.act, payload.music, payload.name);
-          // db.transaction('MUSIC_LIST','readwrite').objectStore('MUSIC_LIST').put()
-          (context.state.musicLists as Array<MusicList>).forEach(
-            (musiclist, index) => {
-              if (musiclist.name == payload.name) {
-                list = musiclist;
-                // Vue.set(context.state.musicLists, index, musiclist);
-              }
-            }
-          );
-          if (list == null || findMusic(payload.music as Music, list.list) != -1) {
-            return;
-          }
           context.commit('addMusic', payload);
-          if (needUpload)
-            await axios
-              .post('http://localhost:4396/client/addMusic', {
-                uid: context.state.account.uid,
-                name: payload.name,
-                music: payload.music,
-              })
-              .then(resp => {
-                console.log(resp.data);
-                bus.$emit('showMsg', '音乐已添加至' + payload.name);
-              });
           break;
         case SubmitType.REMOVE:
           /**删除 */
           context.commit('removeMusic', payload);
-          if (needUpload)
-            await axios
-              .post('http://localhost:4396/client/removeMusic', {
-                uid: context.state.account.uid,
-                name: payload.name,
-                music: payload.music,
-              })
-              .then(resp => {
-                console.log(resp.data);
-                bus.$emit('showMsg', '音乐已从' + payload.name + '删除');
-              });
           break;
         case SubmitType.EDIT:
           /**编辑 */
+          context.commit('editMusicList', payload);
           break;
         case SubmitType.DROP:
           /**移除 */
+          context.commit('removeMusicList', payload);
           break;
         case SubmitType.CREATE:
           /**创建 */
-          if (needUpload) {
-            await axios
-              .post('http://localhost:4396/client/addMusicList', {
-                uid: context.state.account.uid,
-                name: payload.name,
-              })
-              .then(resp => {
-                // console.log(resp.data);
-                payload.lid = resp.data;
-                context.commit('addMusicList', payload);
-                bus.$emit('showMsg', '歌单 ' + payload.name + '创建成功！');
-              });
-          } else {
-            context.commit('addMusicList', payload);
-            bus.$emit('showMsg', '歌单 ' + payload.name + '创建成功！');
-          }
+
+          context.commit('addMusicList', payload);
           break;
       }
-      console.log('modifMusicList', payload);
     },
   },
   modules: {

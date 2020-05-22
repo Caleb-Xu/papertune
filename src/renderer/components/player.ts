@@ -127,7 +127,7 @@ export default Vue.extend({
       const payload: MusicListPayload = {
         act: SubmitType.ADD,
         music: music,
-        name: this.$store.state.musicLists[0].name,
+        lid: this.$store.state.musicLists[0].lid,
       };
       if (music.isFavor == false) {
         payload.act = SubmitType.REMOVE;

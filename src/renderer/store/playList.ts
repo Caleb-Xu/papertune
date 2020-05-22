@@ -134,18 +134,18 @@ const option: Module<PlayList, any> = {
     },
     /**添加音乐至播放列表 */
     addMusicsToPlaylist(state, musics: Array<Music>) {
-      // console.log('vol is', state.vol);
+      console.log('vol is', state.vol);
       if (musics.length == 0) {
         console.warn('add empty musics');
         return;
       }
-      const index = state.currentIndex;
       /**去重 */
       const musicfilted = musics.filter(music => {
         return findMusic(music, state.queue) == -1;
       });
       /**全空则播放最新一个 */
       if (musicfilted.length == 0) {
+        bus.$emit('showMsg', '音乐已存在于播放列表！');
         to(state, findMusic(musics[0], state.queue));
         return;
       }
@@ -155,6 +155,7 @@ const option: Module<PlayList, any> = {
       console.log('add finish', musicfilted);
       bus.$emit('showMsg', '音乐添加成功');
       to(state, nextIndex);
+      Vue.nextTick(() => (state.playing = true));
     },
     replaceMusicsToPlaylist(state, musics: Array<Music>) {
       if (musics.length == 0) {
@@ -165,6 +166,7 @@ const option: Module<PlayList, any> = {
       state.queue = [];
       state.queue.push(...musics);
       to(state, state.queue.length - musics.length);
+      state.playing = true;
     },
     to,
     go,

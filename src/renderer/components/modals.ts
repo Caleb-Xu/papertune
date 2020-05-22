@@ -85,51 +85,51 @@ export default Vue.extend({
     /**登录窗口的关闭回调 */
     login(index, val, isChecked) {
       //
-      if (arguments.length < 2 || val == 'no') {
-        this.$set(this.modalList[index], 'active', false);
-        return;
-      } else {
-        /**登录 */
-        const params = qs.stringify({
-          name: this.name,
-          password: encyptString(this.password),
-        });
-        //todo axios.post拿不到cookie，只能在这边生成
-        this._http
-          .post('http://localhost:4396/client/login', params)
-          .then(resp => {
-            console.log(resp.data);
-            let cookieUid = 'uid=' + resp.data.uid + ';';
-            let cookieToken = 'token=' + resp.data.token + ';';
-            if (isChecked) {
-              cookieUid += ' max-age=' + 60 * 60 * 24 * 30;
-              cookieToken += ' max-age=' + 60 * 60 * 24 * 30;
-            }
-            document.cookie = cookieUid;
-            document.cookie = cookieToken;
-            bus.$emit('initAccount', {
-              uid: resp.data.uid,
-              name: this.name,
-            });
-            this.$set(this.modalList[index], 'active', false);
-            bus.$emit('showMsg','登录成功...');
-          })
-          .catch(error => {
-            if (error.response) {
-              if (error.response.status == 600) {
-                console.warn(error.response.data.msg);
-              }
-            } else {
-              console.log('Error', error.message);
-            }
-          })
-          .finally(() => {
-            /**复原 */
-            this.name = '';
-            this.password = '';
-          });
-        // bus.$emit(index + '-reply', val, isChecked);
-      }
+      // if (arguments.length < 2 || val == 'no') {
+      //   this.$set(this.modalList[index], 'active', false);
+      //   return;
+      // } else {
+      //   /**登录 */
+      //   const params = qs.stringify({
+      //     name: this.name,
+      //     password: encyptString(this.password),
+      //   });
+      //   //todo axios.post拿不到cookie，只能在这边生成
+      //   this._http
+      //     .post('http://localhost:4396/client/login', params)
+      //     .then(resp => {
+      //       console.log(resp.data);
+      //       let cookieUid = 'uid=' + resp.data.uid + ';';
+      //       let cookieToken = 'token=' + resp.data.token + ';';
+      //       if (isChecked) {
+      //         cookieUid += ' max-age=' + 60 * 60 * 24 * 30;
+      //         cookieToken += ' max-age=' + 60 * 60 * 24 * 30;
+      //       }
+      //       document.cookie = cookieUid;
+      //       document.cookie = cookieToken;
+      //       bus.$emit('initAccount', {
+      //         uid: resp.data.uid,
+      //         name: this.name,
+      //       });
+      //       this.$set(this.modalList[index], 'active', false);
+      //       bus.$emit('showMsg','登录成功...');
+      //     })
+      //     .catch(error => {
+      //       if (error.response) {
+      //         if (error.response.status == 600) {
+      //           console.warn(error.response.data.msg);
+      //         }
+      //       } else {
+      //         console.log('Error', error.message);
+      //       }
+      //     })
+      //     .finally(() => {
+      //       /**复原 */
+      //       this.name = '';
+      //       this.password = '';
+      //     });
+      //   // bus.$emit(index + '-reply', val, isChecked);
+      // }
     },
   },
   created() {

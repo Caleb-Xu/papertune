@@ -4,6 +4,7 @@
 
 import { MusicList, Music } from 'utils/music';
 import Vue from 'vue';
+import bus from '../bus';
 
 export default Vue.extend({
   data() {
@@ -27,6 +28,9 @@ export default Vue.extend({
   methods: {
     setActive(music: Music) {
       this.active = music;
+    },
+    cannotPlay(){
+      bus.$emit('showMsg','该歌曲为版权歌曲，无法播放！');
     },
   },
   mounted() {
