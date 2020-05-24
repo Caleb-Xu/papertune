@@ -549,6 +549,15 @@ export default Vue.extend({
       console.info('data all saved!');
       return;
     },
+    /**保存localStorage */
+    saveStorage() {
+      /**本地路径 */
+      localStorage.setItem(
+        'LOCAL_PATHS',
+        JSON.stringify(this.$store.state.localPaths)
+      );
+      /**以后可能还会有更多 */
+    },
     /**监听键盘 */
     keyup(e: KeyboardEvent) {
       let node;
@@ -569,11 +578,13 @@ export default Vue.extend({
     /**对应客户端内的退出选项 */
     bus.$on('quit', async () => {
       await this.saveIDB();
+      this.saveStorage();
       ipcRenderer.send('quit');
     });
     /**对应托盘的退出选项 */
     ipcRenderer.on('b4Quit', async () => {
       await this.saveIDB();
+      this.saveStorage();
       ipcRenderer.send('quit');
     });
 

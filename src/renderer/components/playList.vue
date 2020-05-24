@@ -45,6 +45,7 @@ $width = 250px;
 
 [data-root] {
   overflow-x: hidden;
+  z-index: 100;
 
   * {
     background: transparent;

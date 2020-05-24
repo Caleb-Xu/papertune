@@ -97,17 +97,20 @@ export default Vue.extend({
       this.$store.dispatch('modifyMusicList', payload);
       this.newListName = '';
     },
-    toggleEditingMusicList(lid) {
+    toEditingMusicList(lid) {
       this.adding = false;
       this.editing = !this.editing;
-      if (this.editing) {
-        this.newListName = this.musicLists[lid].name;
-        this.editingList = lid;
-        const input = this.$refs['add-input'] as HTMLInputElement;
-        this.$nextTick(() => input?.focus());
-      } else {
-        this.editingList = -1;
-      }
+      this.editingList = lid;
+      this.musicLists.forEach(musiclist => {
+        if (musiclist.lid == lid) {
+          this.newListName = musiclist.name;
+        }
+      });
+
+      this.$nextTick(() => {
+        const input = this.$refs['edit-input'][0] as HTMLInputElement;
+        input?.focus();
+      });
     },
     getMusicListMenuOption(lid: number, xy): MenuOption {
       const _this = this;
@@ -132,14 +135,16 @@ export default Vue.extend({
       const payload = {} as MusicListPayload;
       switch (index) {
         case 0:
-          this.$store.commit(
-            'replaceMusicsToPlaylist',
-            this.musicLists[index].list
-          );
+          this.musicLists.forEach(musiclist => {
+            if (musiclist.lid == lid) {
+              this.$store.commit('replaceMusicsToPlaylist', musiclist.list);
+            }
+          });
+
           break; //播放歌单
         case 1:
           this.editingList = lid;
-          this.toggleEditingMusicList(lid);
+          this.toEditingMusicList(lid);
           break; //重命名
         case 2:
           payload.act = SubmitType.DROP;
@@ -147,10 +152,25 @@ export default Vue.extend({
           this.$store.dispatch('modifyMusicList', payload);
           ///
           break; //删除歌单
-        case 3:
-          break; //下载歌单
       }
     },
+    cancelEdit() {
+      this.editingList = -1;
+      this.editing = false;
+      this.newListName = '';
+    },
+    editListName(lid) {
+      this.musicLists.forEach(musiclist => {
+        if (musiclist.lid == lid) {
+          const payload: MusicListPayload = {
+            act: SubmitType.EDIT,
+            lid: lid,
+            name: this.newListName
+          }
+          this.$store.dispatch('modifyMusicList', payload);
+        }
+      });
+    }
   },
   created() {
     this.uid = +this.$route.query.uid;
@@ -167,10 +187,15 @@ export default Vue.extend({
           (await getMusicPic(musicList.list[musicList.list.length - 1])) ||
           this._config.DEFAULT_MUSIC_PIC;
         this.$set(this.pics, index, p);
-        // console.log(this.pics[index]);
       } else {
         this.pics[index] = pic;
       }
     });
   },
+  beforeDestroy() {
+    bus.$off('accountMusicListReply', this.menuReply);
+  },
+  components: {
+    tabs: () => import('components/tab.vue')
+  }
 });

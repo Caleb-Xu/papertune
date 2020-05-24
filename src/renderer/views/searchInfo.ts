@@ -34,8 +34,8 @@ export default Vue.extend({
         menuItems: [
           {
             index: 0,
-            text: '添加到歌单',
-            subMenu: subMenu,
+            text: '添加到歌单...',
+            subMenu,
             subShow: false,
           },
           {
@@ -116,24 +116,32 @@ export default Vue.extend({
       }
       this.$store.dispatch('modifyMusicList', payload);
     },
-    menu(music: Music, e: MouseEvent) {
+    menu(index: number, e: MouseEvent) {
       /**唤起菜单 */
-      console.log('menu', music);
+      console.log('menu', this.musics[index]);
       this.$set(this.menuOption, 'xy', { x: e.x, y: e.y });
-      this.$set(this.menuOption, 'target', music);
-      bus.$emit('showMenu', this.menuOption);
+      this.$set(this.menuOption, 'target', index);
+      bus.$emit('showMenu', JSON.parse(JSON.stringify(this.menuOption))); //拷贝对象，防止关联
     },
-    dealMenu(index, music: Music, subIndex: number) {
-      console.log('dealMenu', index, music, subIndex);
+    dealMenu(index, listIndex: number, subIndex: number) {
+      console.log('dealMenu', index, this.musics[listIndex], subIndex);
 
       switch (index) {
         case 0:
-          /**添加到歌单           */
-          this.addMusic(music, subIndex);
+          /**如果是第一个，favor*/
+          if (subIndex == 0) {
+            // music.isFavor = true; //直接更新对象属性无法即时作用于视图，因此将target改为index
+            this.$set(this.musics[listIndex], 'isFavor', true);
+          }
+          /**添加到歌单...*/
+          this.addMusic(
+            this.musics[listIndex],
+            this.$store.state.musicLists[subIndex].lid
+          );
           break;
         case 1:
           /**播放 */
-          this.play(music);
+          this.play(this.musics[listIndex]);
           break;
       }
     },
@@ -141,7 +149,7 @@ export default Vue.extend({
       const payload: MusicListPayload = {
         act: SubmitType.ADD,
         music: music,
-        name: this.$store.getters.allListNames[index],
+        lid: index
       };
       this.$store.dispatch('modifyMusicList', payload);
     },
@@ -175,6 +183,12 @@ export default Vue.extend({
     }
 
     this.getData();
+  },
+  beforeDestroy() {
+    /**
+     * ? event bus的坑，必须要$off
+     */
+    bus.$off('searchListReply', this.dealMenu);
   },
   components: {
     musicTable: () => import('components/musicTable.vue'),

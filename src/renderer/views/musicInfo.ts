@@ -111,4 +111,7 @@ export default Vue.extend({
   mounted() {
     bus.$on('timeUpdate', this.selectLrc);
   },
+  beforeDestroy(){
+    bus.$off('timeUpdate', this.selectLrc);
+  }
 });

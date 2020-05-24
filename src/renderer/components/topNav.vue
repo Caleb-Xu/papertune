@@ -53,11 +53,19 @@
       <li class="btn-item"></li>
       <li class="btn-item">
         <div
+          @click.stop="$router.push({
+            path: '/setting',
+          })"
+          data-type="topMenu"
+          title="设置"
+          class="top-btn info-to-normal iconfont icon-category"
+        />
+        <!-- <div
           @click.stop="showTopMenu"
           data-type="topMenu"
           title="菜单"
           class="top-btn info-to-normal iconfont icon-category"
-        />
+        />-->
       </li>
       <li class="btn-item">
         <div

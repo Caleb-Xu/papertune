@@ -16,13 +16,12 @@
         </th>
       </tr>
     </thead>
-    <!-- <transition-group tag="tbody" name="list"> -->
     <tbody>
       <tr
-        v-for="music in list"
+        v-for="(music,index) in list"
         :key="music.src+music.id"
         @click="!music.fee && setActive(music)"
-        @click.right="!music.fee && $emit('menu',music,$event)"
+        @click.right="!music.fee && $emit('menu',index,$event)"
         @dblclick="music.fee?cannotPlay():$emit('play', music)"
         class="music"
         :class="[music==active && 'active', music.fee && 'fee']"
@@ -46,7 +45,7 @@
             />
             <div
               title="菜单"
-              @click="!music.fee && $emit('menu',music,$event)"
+              @click.stop="!music.fee && $emit('menu',index,$event)"
               class="btn iconfont icon-viewgallery"
             />
           </div>

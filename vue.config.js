@@ -46,7 +46,7 @@ module.exports = {
             compress: {
               drop_debugger: true,
               /** 测试阶段暂时启用console */
-              // 'drop_console': true,
+              drop_console: true,
             },
             warnings: false,
             parallel: true,

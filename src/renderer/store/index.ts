@@ -99,10 +99,17 @@ const options: StoreOptions<any> = {
       if (payload.lid != null || payload.name != null) {
         (state.musicLists as Array<MusicList>).forEach((musiclist, index) => {
           if (musiclist.name == payload.name || musiclist.lid == payload.lid) {
-            musiclist.list?.push(payload.music as Music);
-            console.log(musiclist.list);
-            console.log('added');
-            bus.$emit('showMsg', '音乐已添加至【' + musiclist.name + '】');
+            if (
+              payload.music &&
+              findMusic(payload.music, musiclist.list) == -1
+            ) {
+              musiclist.list?.push(payload.music as Music);
+              console.log(musiclist.list);
+              console.log('added');
+              bus.$emit('showMsg', '音乐已添加至【' + musiclist.name + '】');
+            } else {
+              bus.$emit('showMsg', '音乐已存在于歌单中');
+            }
           }
         });
       } else {

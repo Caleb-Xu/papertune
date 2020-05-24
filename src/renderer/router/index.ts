@@ -18,6 +18,12 @@ const routes: Array<RouteConfig> = [
     component: localList,
   },
   {
+    // path: '/localList',
+    path: '/setting',
+    name: 'setting',
+    component: () => import('@/renderer/views/setting.vue'),
+  },
+  {
     path: '/accountInfo',
     name: 'accountInfo',
     component: () => import('@/renderer/views/accountInfo.vue'),
@@ -37,18 +43,6 @@ const routes: Array<RouteConfig> = [
     name: 'searchInfo',
     component: () => import('@/renderer/views/searchInfo.vue'),
     props: true,
-  },
-  {
-    path: '/setting',
-    name: 'setting',
-    component: undefined,
-    children: [
-      {
-        path: 'base',
-        name: 'setting-base',
-        component: undefined,
-      },
-    ],
   },
   {
     path: '*',

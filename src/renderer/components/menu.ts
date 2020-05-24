@@ -60,28 +60,20 @@ export default Vue.extend({
      * 通过过滤的数组的索引获取未过滤选项组的真正索引
      */
     select(filterIndex: number, subIndex?: number) {
-      console.log('select', filterIndex, subIndex);
-      if (subIndex) {
+      console.log('select', filterIndex, subIndex,'type:',this.menuOption.type);
+      /**如果是子菜单 */
+      if (subIndex != null) {
         bus.$emit(
           this.menuOption.type + 'Reply',
           this.itemFilter[filterIndex].index,
           this.menuOption.target,
           subIndex
         );
+        console.log('select sended!');
         this.showMenu = false;
         return;
       }
       if (filterIndex != null) {
-        /**有子菜单 */
-        if (this.itemFilter[filterIndex].subMenu) {
-          this.$set(
-            this.itemFilter[filterIndex],
-            'subShow',
-            !this.itemFilter[filterIndex].subShow
-          );
-          return;
-        }
-
         console.log('select', this.itemFilter[filterIndex].text);
         bus.$emit(
           this.menuOption.type + 'Reply',
@@ -97,13 +89,18 @@ export default Vue.extend({
     isDisabled(index: number): boolean {
       return this.itemFilter[index].disbaled || false;
     },
-  },
-  created() {
-    /**
-     * 根据类型显示菜单
-     * @param option 相关配置,默认为空对象
-     */
-    bus.$on('showMenu', (option: MenuOption) => {
+    /**显示子菜单，隐藏其他子菜单 */
+    mouseEnter(index) {
+      this.itemFilter.forEach((item, i) => {
+        if (i == index) {
+          if (item.subMenu) item.subShow = true;
+        } else {
+          if (item.subMenu) item.subShow = false;
+        }
+      });
+      this.itemFilter[index].subShow = true;
+    },
+    callback(option: MenuOption){
       this.menuOption = option;
       this.showMenu = false;
 
@@ -111,20 +108,23 @@ export default Vue.extend({
         this.showMenu = true;
       });
       console.log(this.showMenu);
-    });
+    }
+  },
+  created() {
+    /**
+     * 根据类型显示菜单
+     * @param option 相关配置,默认为空对象
+     */
+    bus.$on('showMenu', this.callback);
   },
   mounted() {
     /**点击关闭菜单 */
     window.onclick = () => {
       this.showMenu = false;
     };
-    (this.$el as HTMLElement).onkeydown = (e: KeyboardEvent) => {
-      switch (e.keyCode) {
-        case 13:
-        case 27:
-          this.showMenu = false;
-          break;
-      }
-    };
   },
+  beforeDestroy() {
+    /**menu会一直存在，其实这个没有什么用 */
+    bus.$off('showMenu', this.callback);
+  }
 });

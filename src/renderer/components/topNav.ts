@@ -20,15 +20,6 @@ export default Vue.extend({
         },
         {
           index: 1,
-          text: '意见反馈',
-        },
-        {
-          index: 2,
-          text: this.isOnline ? '登出' : '登录',
-          hidden: this._config.SINGLE,
-        },
-        {
-          index: 3,
           text: '退出',
         },
       ];
@@ -131,13 +122,10 @@ export default Vue.extend({
         menuItems: [],
         xy: {
           x: (e.target as HTMLElement).offsetLeft,
-          y: (e.target as HTMLElement).offsetTop + 50, //固定位置，避开顶栏（会有交互bug）
+          y: 150, //固定位置，避开顶栏（会有交互bug）
         },
       };
       switch (type) {
-        case 'downloadTab':
-          bus.$emit('showDownloadTab', option);
-          break;
         case 'topMenu':
           option.menuItems = this.topMenuItems;
           bus.$emit('showMenu', option);
@@ -145,20 +133,14 @@ export default Vue.extend({
       }
     },
     /**菜单回调 */
-    topMenuReply(index: number, target) {
+    topMenuReply(index: number) {
       switch (index) {
         case 0:
+          this.$router.push({
+            path: '/setting',
+          });
           break; //设置
         case 1:
-          break; //意见反馈
-        case 2:
-          if (this.isLogin) {
-            //登出
-          } else {
-            //登录
-          }
-          break; //登录/登出
-        case 3:
           this.close('quit');
           break; //退出
       }

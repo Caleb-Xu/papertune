@@ -19,6 +19,7 @@ export default Vue.extend({
     },
     to(index) {
       this.$store.commit('to', index);
+      this.$store.getters.getPlayList.playing = true;
     },
     remove(index) {
       if (index == this.playList.currentIndex) this.$store.commit('go', 1);

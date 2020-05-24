@@ -15,19 +15,8 @@
         </div>
       </header>
       <main>
-        <section id="tab-bar">
-          <ul id="tabs">
-            <li id="lists-tab" @click="activeTab=0" class="tab" :class="[activeTab==0 &&'active']">
-              <span>我的歌单</span>
-            </li>
-            <!-- <li id="info-tab" @click="activeTab=1" class="tab" :class="[activeTab==1 &&'active']">
-              <span>个人资料</span>
-            </li>-->
-          </ul>
-          <div id="line"></div>
-        </section>
-        <section id="views">
-          <section id="lists" v-show="activeTab==0">
+        <tabs :tabNames="['我的歌单']">
+          <template v-slot:tab-0>
             <ul id="music-lists">
               <li class="list" v-for="(list,index) in musicLists" :key="list.lid">
                 <div
@@ -41,7 +30,16 @@
                     draggable="false"
                   />
                 </div>
-                <div class="list-name">{{list.name}}</div>
+                <div class="list-name" v-if="list.lid!=editingList">{{list.name}}</div>
+                <input
+                  type="text"
+                  class="edit-input"
+                  ref="edit-input"
+                  @blur="cancelEdit"
+                  @keydown.enter="editListName(list.lid)"
+                  v-else
+                  v-model="newListName"
+                />
               </li>
               <li class="list">
                 <div class="list-pic shadow-block" id="add-btn" @click="toggleAddMusicList">
@@ -58,9 +56,8 @@
                 />
               </li>
             </ul>
-          </section>
-          <section id="info" v-show="activeTab==1">info</section>
-        </section>
+          </template>
+        </tabs>
       </main>
     </main>
   </div>
@@ -71,6 +68,7 @@
 <style lang="stylus" scoped>
 [data-root] {
   position: relative;
+  overflow: auto;
 
   * {
     background: transparent;
@@ -133,101 +131,62 @@
       margin: 40px 0 20px;
       flex: 1;
 
-      #tab-bar {
+      #music-lists {
         width: 100%;
+        display: flex;
+        align-items: center;
+        flex-flow: wrap;
 
-        #line {
-          height: 2px;
-          width: 100%;
-          background-color: var(--primary);
-        }
+        .list {
+          width: 100px;
+          margin: 20px 15px;
+          box-shaodw: var(--shadow);
 
-        #tabs {
-          display: flex;
+          &:hover {
+            box-shaodw: var(--shadow-hover);
+          }
 
-          .tab {
+          .list-pic {
             width: 100px;
-            height: 30px;
-            box-shadow: var(--shadow);
-            display: flex;
-            justify-content: center;
-            align-self: center;
-            cursor: pointer;
-            color: var(--info);
+            height: @width;
+            overflow: hidden;
 
-            &.active {
-              background-color: var(--primary);
-              color: var(--background);
-            }
-
-            span {
-              line-height: 30px;
-              font-size: var(--m);
+            .pic {
+              width: 100px;
+              height: auto;
+              cursor: pointer;
             }
           }
-        }
-      }
 
-      #views {
-        padding: 10px;
+          .list-name {
+            margin-top: 5px;
+            color: var(--normal);
+            font-size: var(--s);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            text-align: center;
+            width: 100px;
 
-        #lists {
-          widtoh: 100%;
-          height: 100%;
-          overflow-y: auto;
+            &.adding {
+              color: var(--info);
+            }
+          }
 
-          #music-lists {
-            width: 100%;
+          .edit-input {
+            width: 100px;
+            color: var(--normal);
+          }
+
+          #add-btn {
             display: flex;
+            justify-content: center;
             align-items: center;
 
-            .list {
-              width: 100px;
-              margin: 20px 10px;
-              box-shaodw: var(--shadow);
-
-              &:hover {
-                box-shaodw: var(--shadow-hover);
-              }
-
-              .list-pic {
-                width: 100px;
-                height: @width;
-                overflow: hidden;
-
-                .pic {
-                  width: 100px;
-                  height: auto;
-                  cursor: pointer;
-                }
-              }
-
-              .list-name {
-                margin-top: 5px;
-                color: var(--normal);
-                font-size: var(--s);
-                overflow: hidden;
-                text-overflow: ellipsis;
-                white-space: nowrap;
-                text-align: center;
-                width: 100px;
-
-                &.adding {
-                  color: var(--info);
-                }
-              }
-
-              #add-btn {
-                display: flex;
-                justify-content: center;
-                align-items: center;
-
-                #add-icon {
-                  color: var(--primary);
-                  font-size: var(--xl);
-                  font-weight: bold;
-                }
-              }
+            #add-icon {
+              color: var(--primary);
+              font-size: var(--xl);
+              font-weight: bold;
             }
           }
         }

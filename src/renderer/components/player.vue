@@ -11,7 +11,7 @@
     ></audio>
     <main id="main">
       <div id="left-box" v-if="music!=null">
-        <div id="music-info" @click="$router.push('musicInfo').catch(err=>{})">
+        <div id="music-info" @click.right="menu"  @click="$router.push('musicInfo').catch(err=>{})">
           <img id="music-pic" draggable="false" :src="pic || _config.DEFAULT_MUSIC_PIC" />
           <div id="name-and-artist">
             <div id="music-name" :title="music.title">{{music.title || '未知音乐'}}</div>

@@ -11,6 +11,7 @@ import {
 } from 'utils/music';
 import { mapState, mapMutations } from 'vuex';
 import { getMusicPic } from 'utils/musicFile';
+import { MenuOption, MenuItem } from '../utils/options/menuOption';
 
 /**
  * * 下午的目标：
@@ -74,6 +75,36 @@ export default Vue.extend({
   },
   computed: {
     ...mapState(['isOnline', 'downloadPath']),
+    menuOption(): MenuOption {
+      const subMenu = [] as Array<MenuItem>;
+      (this.$store.getters.allListNames as Array<string>).forEach(
+        (name, index) => {
+          subMenu.push({
+            index,
+            text: name,
+          });
+        }
+      );
+      return {
+        menuItems: [
+          {
+            index: 0,
+            text: '添加到歌单...',
+            subMenu,
+            subShow: false,
+          },
+          {
+            index: 1,
+            text: '从播放列表移除',
+          },
+        ],
+        type: 'player',
+        xy: {
+          x: 0,
+          y: 0,
+        },
+      };
+    },
     /**vuex中的playList */
     playList(): PlayList {
       return this.$store.getters.getPlayList;
@@ -95,6 +126,12 @@ export default Vue.extend({
   methods: {
     ...mapMutations(['go']),
     getMusicPic,
+    menu(e: MouseEvent) {
+      /**唤起菜单 */
+      this.$set(this.menuOption, 'xy', { x: e.x, y: e.y });
+      // this.$set(this.menuOption, 'target', this.music);
+      bus.$emit('showMenu', this.menuOption);
+    },
     toMusicPage() {
       this.$router.push('musicInfo').catch(err => {
         //
@@ -165,7 +202,7 @@ export default Vue.extend({
       // /**元素左边界横坐标 */
       console.log('oldX', x);
       console.log('width', width);
-      console.log(e.target);
+      // console.log(e.target);
       const _this = this;
       function moveVol(e: MouseEvent) {
         x = x + e.movementX;
@@ -181,18 +218,15 @@ export default Vue.extend({
     },
     setVol(e: MouseEvent) {
       // console.log(e.offsetX);
-      this.playList.vol = e.offsetX / (e.target as HTMLElement).clientWidth;
+      this.playList.vol =
+        e.offsetX / (this.$refs['vol-bar'] as HTMLElement).clientWidth;
       if (this.playList.vol > 1) this.playList.vol = 1;
       else if (this.playList.vol < 0) this.playList.vol = 0;
     },
-    /**控制播放进度
-     * * 拖动过程中不会影响进度，鼠标释放再修改进度
-     * ! 已知bug：在鼠标拖动进入其他热区时会导致进度条异常
-     * ? 原因：拖动过程中指针可能会进入其他元素，从而导致e.target指向其他元素而不是进度条
-     * ? 解决方案：根据鼠标按下时的坐标以及对应元素的上下限坐标计算，使用闭包会好一些
-     */
+    /**控制播放进度*/
     setProgress(e: MouseEvent) {
-      let progress = e.offsetX / (e.target as HTMLElement).clientWidth;
+      let progress =
+        e.offsetX / (this.$refs['progress'] as HTMLElement).clientWidth;
       if (progress > 1) progress = 1;
       else if (progress < 0) progress = 0;
       this.audio.currentTime = this.audio.duration * progress;
@@ -276,12 +310,36 @@ export default Vue.extend({
     async setPic() {
       this.pic = (await this.getMusicPic(this.music)) || '';
     },
+    dealMenu(index, target: Music /* 空 */, subIndex: number) {
+      console.log('dealMenu', index, target, subIndex);
+      const payload: MusicListPayload = {
+        act: SubmitType.ADD,
+        music: this.music,
+      };
+      switch (index) {
+        case 0:
+          /**添加到歌单...*/
+          /**如果是第一个，favor*/
+          if (subIndex == 0) {
+            // music.isFavor = true; //直接更新对象属性无法即时作用于视图，因此将target改为index
+            this.$set(this.music, 'isFavor', true);
+          }
+          payload.lid = this.$store.state.musicLists[subIndex].lid;
+          this.$store.dispatch('modifyMusicList', payload);
+          break;
+        case 1:
+          /**从播放列表移除 */
+          this.$store.commit('deleteMusicInPlayList', this.music);
+          break;
+      }
+    },
     // getMusicPic(){
     //   //
     // }
   },
   created() {
     bus.$on('replay', this.replay);
+    bus.$on('playerReply', this.dealMenu);
   },
   mounted() {
     this.audio = this.$refs.audio as HTMLAudioElement;

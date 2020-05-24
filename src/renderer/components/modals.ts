@@ -131,9 +131,7 @@ export default Vue.extend({
       //   // bus.$emit(index + '-reply', val, isChecked);
       // }
     },
-  },
-  created() {
-    bus.$on('showModal', (option: ModalMsg) => {
+    callback(option: ModalMsg) {
       console.info('showModal', option.type);
       ipcRenderer.send('showModal');
       const modal = this.modalList[option.type];
@@ -151,9 +149,15 @@ export default Vue.extend({
       /**如果模态框活跃，不操作 */
       if (modal.active) return;
       this.$set(this.modalList[option.type], 'active', true);
-    });
+    },
+  },
+  created() {
+    bus.$on('showModal', this.callback);
     // console.log('can show modal');
   },
+  beforeDestroy(){
+    bus.$off('showModal', this.callback);
+  }
 });
 
 /**

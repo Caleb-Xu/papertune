@@ -64,11 +64,11 @@ export interface MusicFileInfo {
 /**歌单 */
 export interface MusicList {
   /**主键，用于兼容mysql */
-  lid?: number;
+  lid: number;
   /**歌单名 */
   name: string;
   /**歌曲列表 */
-  list?: Array<Music>;
+  list: Array<Music>;
   /**描述 */
   description?: string;
   // info: MusicListInfo;

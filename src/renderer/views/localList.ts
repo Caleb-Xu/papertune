@@ -9,7 +9,7 @@ import {
 import { readLocalMusicInfo } from 'utils/musicFile';
 import fs from 'fs';
 import bus from '../bus';
-import { MenuOption } from '../utils/options/menuOption';
+import { MenuOption, MenuItem } from '../utils/options/menuOption';
 import { shell } from 'electron';
 
 /**已知缺陷
@@ -20,36 +20,51 @@ export default Vue.extend({
   data() {
     return {
       musics: [] as Array<Music>,
-      menuOption: {
-        menuItems: [
-          {
-            index: 0,
-            text: '添加到歌单',
-          },
-          {
-            index: 1,
-            text: '打开文件所在位置',
-          },
-        ],
-        type: 'localList',
-        target: '',
-        xy: {
-          x: 0,
-          y: 0,
-        },
-      } as MenuOption,
       filter: '',
       showSearch: false,
     };
   },
   computed: {
+    menuOption(): MenuOption {
+      const subMenu = [] as Array<MenuItem>;
+      (this.$store.getters.allListNames as Array<string>).forEach(
+        (name, index) => {
+          subMenu.push({
+            index,
+            text: name,
+          });
+        }
+      );
+      return {
+        menuItems: [
+          {
+            index: 0,
+            text: '添加到歌单...',
+            subMenu,
+            subShow: false,
+          },
+          {
+            index: 1,
+            text: '打开文件所在位置',
+          },
+          {
+            index: 2,
+            text: '播放',
+          },
+        ],
+        type: 'localList',
+        xy: {
+          x: 0,
+          y: 0,
+        },
+      };
+    },
     hasMusic(): boolean {
       return this.musics && this.musics.length > 0;
     },
     getAllPaths(): Array<string> {
-      /**测试 */
-      // return this.$store.getters.getAllPaths.concat('D:\\MyMusic\\网易云音乐');
-      return this.$store.getters.getAllPaths;
+      // return this.$store.getters.getAllPaths;
+      return this.$store.state.localPaths;
     },
     filtedMusics(): Array<Music> {
       if (this.filter == '') {
@@ -60,14 +75,6 @@ export default Vue.extend({
         if (result && result > -1) {
           return true;
         }
-        // result = music.album?.search(this.filter);
-        // if (result && result > -1) {
-        //   return true;
-        // }
-        // result = music.artist?.search(this.filter);
-        // if (result && result > -1) {
-        //   return true;
-        // }
         return false;
       });
     },
@@ -98,36 +105,64 @@ export default Vue.extend({
         music: music,
         name: this.$store.state.musicLists[0].name,
       };
-      if(music.isFavor==false) {
-        payload.act = SubmitType.REMOVE
+      if (music.isFavor == false) {
+        payload.act = SubmitType.REMOVE;
       }
       this.$store.dispatch('modifyMusicList', payload);
     },
-    menu(music: Music, e: MouseEvent) {
+    menu(index: number, e: MouseEvent) {
       /**唤起菜单 */
+      const music = this.musics[index];
       console.log('menu', music);
       this.$set(this.menuOption, 'xy', { x: e.x, y: e.y });
-      this.$set(this.menuOption, 'target', music);
+      this.$set(this.menuOption, 'target', index);
       bus.$emit('showMenu', this.menuOption);
     },
-    dealMenu(index, music: Music) {
+    dealMenu(index, listIndex: number, subIndex) {
       switch (index) {
         case 0:
-          /**添加到歌单
-           * todo 待开发
-           */
+          /**添加到歌单...*/
+          /**如果是第一个，favor*/
+          if (subIndex == 0) {
+            // music.isFavor = true; //直接更新对象属性无法即时作用于视图，因此将target改为index
+            this.$set(this.musics[listIndex], 'isFavor', true);
+          }
+          /**添加到歌单...*/
+          this.addMusic(
+            this.musics[listIndex],
+            this.$store.state.musicLists[subIndex].lid
+          );
           break;
         case 1:
           /**打开文件位置 */
-          shell.showItemInFolder(music.src);
+          shell.showItemInFolder(this.musics[listIndex].src);
+          break;
+        case 2:
+          /**播放 */
+          this.play(this.musics[listIndex]);
           break;
       }
     },
+    addMusic(music: Music, index: number) {
+      const payload: MusicListPayload = {
+        act: SubmitType.ADD,
+        music: music,
+        lid: index,
+      };
+      this.$store.dispatch('modifyMusicList', payload);
+    },
     /**跳转到设置页面设置本地路径 */
     toSetLocalFiles() {
-      this.$router.push('setting/base').catch(err => {
-        //
-      });
+      this.$router
+        .push({
+          path: '/setting',
+          query: {
+            tab: '0',
+          },
+        })
+        .catch(err => {
+          //
+        });
     },
     // /**获取数据库 */
     // getFilesDB(): Promise<IDBDatabase> {
@@ -191,11 +226,14 @@ export default Vue.extend({
     // this.loadLocalMusicFiles();
   },
   mounted() {
-    if (this.getAllPaths[0].length > 0) {
+    if (this.getAllPaths.length > 0) {
       this.refresh();
     }
   },
-
+  beforeDestroy() {
+    bus.$off('getted-paths', this.refresh);
+    bus.$off('localListReply', this.dealMenu);
+  },
   components: {
     musicTable: () => import('components/musicTable.vue'),
   },

@@ -113,11 +113,17 @@ const option: Module<PlayList, any> = {
     },
   },
   mutations: {
-    deleteMUsicInPlayList(state, index: number) {
+    deleteMusicInPlayList(state, music: Music) {
+      const index = findMusic(music,state.queue);
+      if(index==-1){
+        bus.$emit('showMsg','播放列表中没有该歌曲');
+        return;
+      }
       state.queue.splice(index, 1);
       if (index == state.currentIndex) {
         go(state, 1);
       }
+      bus.$emit('showMsg','移除成功！');
     },
     setPlayList(state, value: PlayList) {
       /**
@@ -147,6 +153,7 @@ const option: Module<PlayList, any> = {
       if (musicfilted.length == 0) {
         bus.$emit('showMsg', '音乐已存在于播放列表！');
         to(state, findMusic(musics[0], state.queue));
+        Vue.nextTick(() => (state.playing = true));
         return;
       }
 
@@ -160,11 +167,11 @@ const option: Module<PlayList, any> = {
     replaceMusicsToPlaylist(state, musics: Array<Music>) {
       if (musics.length == 0) {
         console.warn('add empty musics');
+        bus.$emit('showMsg', '当前播放列表没有歌曲！');
         return;
       }
       /**清空 */
-      state.queue = [];
-      state.queue.push(...musics);
+      state.queue = [...musics];
       to(state, state.queue.length - musics.length);
       state.playing = true;
     },

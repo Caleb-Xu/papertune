@@ -1,5 +1,5 @@
 /**监听渲染进程信息 */
-import { ipcMain, BrowserWindow } from 'electron';
+import { ipcMain, BrowserWindow, dialog } from 'electron';
 
 export default function(win: BrowserWindow) {
   //关闭窗口
@@ -23,5 +23,13 @@ export default function(win: BrowserWindow) {
     .on('showModal', e => {
       console.log('ipc showModal');
       win.flashFrame(true);
+    })
+    .handle('selectFolder', async (e, title?) => {
+      const result = await dialog.showOpenDialog(win, {
+        buttonLabel: '确定',
+        title: title || '选择文件夹',
+        properties: ['openDirectory'],
+      });
+      return result.filePaths[0];
     });
 }

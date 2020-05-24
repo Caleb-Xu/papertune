@@ -3,7 +3,7 @@ import { getDB } from '../utils/tools';
 import { Music, MusicList, MusicListPayload, SubmitType } from '../utils/music';
 import { getMusicPic } from '../utils/musicFile';
 import bus from '../bus';
-import { MenuOption } from '../utils/options/menuOption';
+import { MenuOption, MenuItem } from '../utils/options/menuOption';
 
 export default Vue.extend({
   data() {
@@ -11,24 +11,6 @@ export default Vue.extend({
       listName: '',
       lid: -1,
       pic: '',
-      menuOption: {
-        menuItems: [
-          {
-            index: 0,
-            text: '添加到歌单',
-          },
-          {
-            index: 1,
-            text: '从歌单移除',
-          },
-        ],
-        type: 'musicList',
-        target: '',
-        xy: {
-          x: 0,
-          y: 0,
-        },
-      } as MenuOption,
     };
   },
   computed: {
@@ -42,6 +24,40 @@ export default Vue.extend({
       }
       console.warn('no musiclist');
       return {} as MusicList;
+    },
+    menuOption(): MenuOption {
+      const subMenu = [] as Array<MenuItem>;
+      (this.$store.getters.allListNames as Array<string>).forEach(
+        (name, index) => {
+          subMenu.push({
+            index,
+            text: name,
+          });
+        }
+      );
+      return {
+        menuItems: [
+          {
+            index: 0,
+            text: '添加到歌单...',
+            subMenu,
+            subShow: false,
+          },
+          {
+            index: 1,
+            text: '从歌单移除',
+          },
+          {
+            index: 2,
+            text: '播放',
+          },
+        ],
+        type: 'musicList',
+        xy: {
+          x: 0,
+          y: 0,
+        },
+      };
     },
     listReverse(): Array<Music> {
       return [...(this.musicList.list as Array<Music>)].reverse() || [];
@@ -62,12 +78,12 @@ export default Vue.extend({
         });
       }
     },
-    musicList(val){
-      if(!val.name){
+    musicList(val) {
+      if (!val.name) {
         this.$router.push('/');
         //
       }
-    }
+    },
   },
   methods: {
     /**关于table的回调 */
@@ -90,35 +106,44 @@ export default Vue.extend({
       }
       this.$store.dispatch('modifyMusicList', payload);
     },
-    menu(music: Music, e: MouseEvent) {
+    menu(index: number, e: MouseEvent) {
       /**唤起菜单 */
+      const music = this.listReverse[index];
       console.log('menu', music);
       this.$set(this.menuOption, 'xy', { x: e.x, y: e.y });
-      this.$set(this.menuOption, 'target', music);
+      this.$set(this.menuOption, 'target', index);
       bus.$emit('showMenu', this.menuOption);
     },
     playAll() {
       this.$store.commit('replaceMusicsToPlaylist', this.musicList.list);
       bus.$emit('showMsg', '正在播放 ' + this.musicList.name);
     },
-    dealMenu(index, music: Music) {
+    dealMenu(index, listIndex: number, subIndex: number) {
+      console.log('dealMenu', index, listIndex, subIndex);
       const payload: MusicListPayload = {
         act: SubmitType.ADD,
-        music: music,
-        name: this.$store.state.musicLists[0].name,
+        music: this.listReverse[listIndex],
       };
       switch (index) {
         case 0:
-          /**添加到歌单
-           * todo 待开发
-           */
+          /**添加到歌单...*/
+          /**如果是第一个，favor*/
+          if (subIndex == 0) {
+            // music.isFavor = true; //直接更新对象属性无法即时作用于视图，因此将target改为index
+            this.$set(this.listReverse[listIndex], 'isFavor', true);
+          }
+          payload.lid = this.$store.state.musicLists[subIndex].lid;
+          this.$store.dispatch('modifyMusicList', payload);
           break;
         case 1:
           /**从歌单移除 */
-          this.play(music);
           payload.act = SubmitType.REMOVE;
-
+          payload.name = this.listName;
           this.$store.dispatch('modifyMusicList', payload);
+          break;
+        case 2:
+          /**播放 */
+          this.play(this.listReverse[listIndex]);
           break;
       }
     },
@@ -135,6 +160,9 @@ export default Vue.extend({
         )) || this._config.DEFAULT_MUSIC_PIC;
     }
     // this.getList();
+  },
+  beforeDestroy() {
+    bus.$off('musicListReply', this.dealMenu);
   },
   components: {
     musicTable: () => import('components/musicTable.vue'),

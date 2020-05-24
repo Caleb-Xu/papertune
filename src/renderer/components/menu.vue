@@ -7,16 +7,13 @@
           :style="{height:itemHeight+'px'}"
           class="item-box"
           :key="item.key"
-          @click.stop="select(index)"
+          @click.stop="!item.subMenu && select(index)"
+          @mouseenter="mouseEnter(index)"
         >
-          <div
-            class="click-box"
-          >
+          <div class="click-box">
             <div class="item" :style="{'line-height':itemHeight+'px'}">
               {{item.text}}
-              <span
-                class="iconfont btn-icon"
-              />
+              <span class="iconfont btn-icon" />
             </div>
           </div>
 
@@ -28,14 +25,10 @@
               :key="subItem.key"
               @click.stop="select(index,subIndex)"
             >
-              <div
-                class="click-box"
-              >
+              <div class="click-box">
                 <div class="item" :style="{'line-height':itemHeight+'px'}">
                   {{subItem.text}}
-                  <span
-                    class="iconfont btn-icon"
-                  />
+                  <span class="iconfont btn-icon" />
                 </div>
               </div>
             </li>
@@ -67,9 +60,12 @@
   #item-list {
     .sub-item-list {
       position: absolute;
-      right: -120px;
-      z-index: 1001
-      top: 5px;
+      width: 120px;
+      right: -120px + 5px;
+      z-index: 1001;
+      top: 0px;
+      height: 128px;
+      overflow: auto;
       box-shadow: var(--shadow);
     }
 
@@ -84,6 +80,12 @@
       .click-box {
         height: 100%;
         padding: 0 10px;
+
+        .item {
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
 
         &:hover {
           background: var(--primary);
