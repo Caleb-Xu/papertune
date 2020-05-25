@@ -64,7 +64,7 @@
       right: -120px + 5px;
       z-index: 1001;
       top: 0px;
-      height: 128px;
+      max-height: 128px;
       overflow: auto;
       box-shadow: var(--shadow);
     }

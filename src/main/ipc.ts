@@ -23,13 +23,24 @@ export default function(win: BrowserWindow) {
     .on('showModal', e => {
       console.log('ipc showModal');
       win.flashFrame(true);
-    })
-    .handle('selectFolder', async (e, title?) => {
-      const result = await dialog.showOpenDialog(win, {
-        buttonLabel: '确定',
-        title: title || '选择文件夹',
-        properties: ['openDirectory'],
-      });
-      return result.filePaths[0];
     });
+  ipcMain.handle('selectFolder', async (e, title?) => {
+    const result = await dialog.showOpenDialog(win, {
+      buttonLabel: '确定',
+      title: title || '选择文件夹',
+      properties: ['openDirectory'],
+    });
+    return result.filePaths[0];
+  });
+  ipcMain.handle('selectImage', async (e, title?) => {
+    const result = await dialog.showOpenDialog(win, {
+      buttonLabel: '确定',
+      title: title || '选择图片',
+      filters: [{
+        extensions: ['png','jpg','jpeg'],
+        name: '图片'
+      }]
+    });
+    return result.filePaths[0];
+  });
 }

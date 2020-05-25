@@ -4,6 +4,7 @@ import { MusicList, MusicListPayload, SubmitType, Music } from '../utils/music';
 import bus from '../bus';
 import { getMusicPic } from '../utils/musicFile';
 import { MenuItem, MenuOption } from '../utils/options/menuOption';
+import { ipcRenderer } from 'electron';
 
 enum LIST_INDEX {
   NONE = -1,
@@ -23,9 +24,18 @@ export default Vue.extend({
       editing: false, //是否正在编辑歌单
       editingList: -1,
       LIST_INDEX,
+      newName: '',
+      editingName: false,
+      newDesc: '',
+      editingDesc: false,
     };
   },
   computed: {
+    bgStyle(): any{
+      return {
+        'background-image': `url(${JSON.stringify(this.accountView.avatar)})`
+      }
+    },
     getMusicListMenuItems(): Array<MenuItem> {
       const _this = this;
       return [
@@ -51,6 +61,11 @@ export default Vue.extend({
     account(): Account {
       return this.$store.state.account;
     },
+    avatarStyle(): any {
+      return {
+        'background-image': `url(${JSON.stringify(this.accountView.avatar)})`,
+      };
+    },
     musicLists(): Array<MusicList> {
       return this.$store.state.musicLists;
     },
@@ -64,6 +79,41 @@ export default Vue.extend({
     },
   },
   methods: {
+    editName() {
+      this.editingName = true;
+      this.newName = this.account.name;
+      this.$nextTick(() =>
+        (this.$refs['name-input'] as HTMLInputElement).focus()
+      );
+    },
+    cancelEditName() {
+      this.editingName = false;
+    },
+    editedName() {
+      if (/^[a-zA-Z\u4e00-\u9fa5]/.test(this.newName)){
+        this.$set(this.account, 'name', this.newName);
+        bus.$emit('showMsg', '修改用户名成功！');
+      }
+      else bus.$emit('showMsg', '命名不符合规范');
+      this.editingName = false;
+    },
+    editDesc() {
+      this.editingDesc = true;
+      this.newDesc = this.account.motto || '';
+      this.$nextTick(() =>
+        (this.$refs['desc-input'] as HTMLInputElement).focus()
+      );
+    },
+    cancelEditDesc() {
+      this.editingDesc = false;
+    },
+    editedDesc() {
+      // if (/^[a-zA-Z\u4e00-\u9fa5]/.test(this.newDesc))
+      this.$set(this.account, 'motto', this.newDesc);
+      bus.$emit('showMsg', '修改个性签名成功！');
+      // else bus.$emit('showMsg', '命名不符合规范');
+      this.editingDesc = false;
+    },
     toMusicList(name) {
       this.$router.push({ path: '/musicList', query: { name: name } });
     },
@@ -165,12 +215,22 @@ export default Vue.extend({
           const payload: MusicListPayload = {
             act: SubmitType.EDIT,
             lid: lid,
-            name: this.newListName
-          }
+            name: this.newListName,
+          };
           this.$store.dispatch('modifyMusicList', payload);
         }
       });
-    }
+    },
+    async selectImage() {
+      const path: string = await ipcRenderer.invoke('selectImage', '选择头像');
+      console.log('path:', path);
+      return path;
+    },
+    async setAvatar() {
+      const path = await this.selectImage();
+      // this.account.avatar = path;
+      this.$set(this.account, 'avatar', path);
+    },
   },
   created() {
     this.uid = +this.$route.query.uid;
@@ -196,6 +256,6 @@ export default Vue.extend({
     bus.$off('accountMusicListReply', this.menuReply);
   },
   components: {
-    tabs: () => import('components/tab.vue')
-  }
+    tabs: () => import('components/tab.vue'),
+  },
 });

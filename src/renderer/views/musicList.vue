@@ -1,9 +1,6 @@
 <template>
   <div id="account-info" data-root>
-    <!-- <div id="bg-box">
-      <img :src="accountView.avatar" alt id="bg" />
-    </div>-->
-    <div id="bg" />
+    <div id="bg" :style="bgStyle" />
     <main>
       <header>
         <div id="avatar-box">
@@ -11,8 +8,22 @@
         </div>
         <div id="name-and-motto">
           <div id="title-and-desc">
-            <div id="title">{{musicList.name}}</div>
-            <div id="desc">{{musicList.description || '暂无介绍'}}</div>
+            <div class="title">{{musicList.name}}</div>
+            <input
+              class="desc"
+              ref="desc-input"
+              @keydown.enter="editedDesc"
+              @blur="cancelEditDesc"
+              type="text"
+              v-model="newDesc"
+              v-if="editingDesc"
+            />
+            <div
+              class="desc"
+              :title="musicList.description || '暂无介绍'"
+              @click="editDesc"
+              v-else
+            >{{musicList.description || '暂无介绍'}}</div>
           </div>
           <div id="btn-and-count">
             <div id="total-count">
@@ -65,14 +76,16 @@
   }
 
   #bg {
-    background-image: url('/image/default-music-pic.jpg');
+    // background-image: url('/image/default-music-pic.jpg');
     height: 200px;
     top: 0;
     left: 0;
     width: 100%;
-    filter: brightness(0.8);
+    filter: brightness(0.8) blur(1px);
     position: absolute;
     z-index: 0;
+    background-position: center;
+    background-size: cover;
   }
 
   >main {
@@ -105,19 +118,26 @@
         justify-content: space-between;
 
         #title-and-desc {
-          #title {
+          .title {
             font-size: var(--xl);
             /* 图片固定，不受换色影响 */
             color: white;
             text-shadow: var(--shadow);
+            max-width: 300px;
+            white-space: nowrap;
+            overflow: hidden;
           }
 
-          #desc {
+          .desc {
+            cursor: pointer;
             margin-top: 10px;
             font-size: var(--m);
             /* 图片固定，不受换色影响 */
             color: white;
             text-shadow: var(--shadow);
+            max-width: 360px;
+            white-space: nowrap;
+            overflow: hidden;
           }
         }
 

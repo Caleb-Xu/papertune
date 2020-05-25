@@ -3,15 +3,44 @@
     <!-- <div id="bg-box">
       <img :src="accountView.avatar" alt id="bg" />
     </div>-->
-    <div id="bg" />
+    <div id="bg" :style="bgStyle" />
     <main>
       <header>
         <div id="avatar-box">
-          <img id="avatar" :src="accountView.avatar" draggable="false" />
+          <!-- <img id="avatar" @click="setAvatar" :src="accountView.avatar" draggable="false" /> -->
+          <div id="avatar" @click="setAvatar" :style="avatarStyle" />
         </div>
         <div id="name-and-motto">
-          <div id="account-name">{{accountView.name}}</div>
-          <div id="account-motto">{{accountView.motto}}</div>
+          <input
+            class="account-name"
+            type="text"
+            ref="name-input"
+            @keydown.enter="editedName"
+            @blur="cancelEditName"
+            v-model="newName"
+            v-if="editingName"
+          />
+          <div
+            :title="accountView.name"
+            class="account-name"
+            @click="editName"
+            v-else
+          >{{accountView.name}}</div>
+          <input
+            class="account-motto"
+            ref="desc-input"
+            @keydown.enter="editedDesc"
+            @blur="cancelEditDesc"
+            type="text"
+            v-model="newDesc"
+            v-if="editingDesc"
+          />
+          <div
+            :title="accountView.motto"
+            class="account-motto"
+            @click="editDesc"
+            v-else
+          >{{accountView.motto}}</div>
         </div>
       </header>
       <main>
@@ -75,13 +104,14 @@
   }
 
   #bg {
-    background-image: url('/image/default-music-pic.jpg');
     height: 200px;
     top: 0;
     left: 0;
     width: 100%;
-    filter: brightness(0.8);
+    filter: brightness(0.8) blur(1px);
     position: absolute;
+    background-size: cover;
+    background-position: center;
     z-index: 0;
   }
 
@@ -106,23 +136,32 @@
           width: 100px;
           border-radius: 50%;
           box-shadow: var(--shadow);
+          background-size: cover;
+          background-position: center;
+          cursor: pointer;
         }
       }
 
       #name-and-motto {
         margin-left: 10px;
 
-        #account-name {
+        .account-name {
           font-size: var(--l);
           /* 图片固定，不受换色影响 */
           color: white;
           text-shadow: var(--shadow);
+          max-width: 300px;
+          overflow: hidden;
+          white-space: nowrap;
+          cursor: pointer;
         }
 
-        #account-motto {
+        .account-motto {
+          cursor: pointer;
           font-size: var(--s);
           color: var(--info);
           margin: 10px 0;
+          max-width: 360px;
         }
       }
     }

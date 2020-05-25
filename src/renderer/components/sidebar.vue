@@ -3,7 +3,8 @@
     <section id="account-box" v-if="!_config.SINGLE && isOnline">
       <!-- <div v-if="netActive"> -->
       <div v-if="isLogin || !netActive" id="account-info">
-        <img id="user-avatar" :src="userInfo.avatar" />
+        <!-- <img id="user-avatar" draggable="false" :src="userInfo.avatar" /> -->
+        <div id="user-avatar" :style="avatarStyle" />
         <div id="name-and-link">
           <div id="user-name" :title="userInfo.name">{{userInfo.name}}</div>
           <a id="info-link" @click="toPage('account')">
@@ -53,7 +54,12 @@
           ></div>
         </header>
         <ul class="music-list-list">
-          <li class="music-list-item" @click.right.stop="showListMenu(list.lid,$event)"  :key="list.lid" v-for="list in musicLists">
+          <li
+            class="music-list-item"
+            @click.right.stop="showListMenu(list.lid,$event)"
+            :key="list.lid"
+            v-for="list in musicLists"
+          >
             <div
               class="music-list-title"
               :class="[activeList== list.lid && 'active']"
@@ -69,7 +75,7 @@
             <input
               id="new-list-input"
               type="text"
-              ref = 'add-input'
+              ref="add-input"
               v-model="newListName"
               @keydown.enter="submit"
               @blur="cancel"
@@ -144,8 +150,11 @@ $padding = 20px;
 
     #user-avatar {
       height: 60px;
+      width: @height;
       overflow: hidden;
       border-radius: 50%;
+      background-size: cover;
+      background-position: center;
       box-shadow: var(--shadow);
     }
 
@@ -159,7 +168,9 @@ $padding = 20px;
       #user-name {
         font-size: var(--m);
         color: var(--normal);
-        text-overflow: ellipsis;
+        white-space nowrap
+        overflow hidden
+        max-width 90px
         margin-bottom: 5px;
       }
 

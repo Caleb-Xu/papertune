@@ -11,9 +11,16 @@ export default Vue.extend({
       listName: '',
       lid: -1,
       pic: '',
+      editingDesc: false,
+      newDesc: ''
     };
   },
   computed: {
+    bgStyle(): any{
+      return {
+        'background-image': `url(${JSON.stringify(this.pic || this._config.DEFAULT_MUSIC_PIC)})`
+      }
+    },
     musicList(): MusicList {
       const musicLists = this.$store.state.musicLists as Array<MusicList>;
       for (let i = 0; i < musicLists.length; i++) {
@@ -86,6 +93,21 @@ export default Vue.extend({
     },
   },
   methods: {
+    editDesc() {
+      this.editingDesc = true;
+      this.newDesc = this.musicList.description || '';
+      this.$nextTick(() =>
+        (this.$refs['desc-input'] as HTMLInputElement).focus()
+      );
+    },
+    cancelEditDesc() {
+      this.editingDesc = false;
+    },
+    editedDesc() {
+      this.$set(this.musicList, 'description', this.newDesc);
+      bus.$emit('showMsg', '修改歌单描述成功！');
+      this.editingDesc = false;
+    },
     /**关于table的回调 */
     play(music: Music) {
       this.$store.commit('addMusicsToPlaylist', [music]);

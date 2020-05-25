@@ -26,6 +26,11 @@ export default Vue.extend({
     netActive(): boolean {
       return this.$store.getters.netActive;
     },
+    avatarStyle(): any{
+      return {
+        'background-image': `url(${JSON.stringify(this.userInfo.avatar)})`
+      }
+    },
     userInfo(): any {
       return {
         uid: this.account?.uid || 0,
