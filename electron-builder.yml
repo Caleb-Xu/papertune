@@ -3,9 +3,9 @@ productName: papertune
 nsis: 
   oneClick: false
   allowToChangeInstallationDirectory: true
-  shortcutName: 纸音
+  shortcutName: papertune
   perMachine: true
 win: 
-  icon: ./public/logo.ico
+  icon: ./public/logo/logo.ico
 fileAssociations: 
   ext: [mp3,wav]

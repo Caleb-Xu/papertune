@@ -44,6 +44,7 @@ function createMainWindow(win: BrowserWindow | null) {
     // Load the index.html when not in development
     win.loadURL('app://./index.html');
   }
+  // win.webContents.openDevTools();
   win.on('ready-to-show', () => {
     if (win) win.show();
   });

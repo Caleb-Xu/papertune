@@ -26,5 +26,8 @@ yarn-error.log*
 #设计稿
 /design
 
-#开发日志
+#开发笔记
 log.md
+logic.md
+api.md
+todo.md

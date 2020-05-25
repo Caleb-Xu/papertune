@@ -18,7 +18,7 @@ export default {
     HEIGHT: 720,
   },
   /** 应用默认图标*/
-  LOGO: join(_static, 'logo.ico'),
+  LOGO: join(_static, 'logo/logo.ico'),
   /**默认头像 */
   DEFAULT_BOY_AVATAR: join(_static, 'image/default-boy-avatar.jpg'),
   DEFAULT_GRIL_AVATAR: join(_static, 'image/default-gril-avatar.jpg'),

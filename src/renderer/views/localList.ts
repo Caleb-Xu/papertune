@@ -72,7 +72,7 @@ export default Vue.extend({
       }
       return this.musics.filter(music => {
         const result = music.title?.search(this.filter);
-        if (result && result > -1) {
+        if (result != undefined && result > -1) {
           return true;
         }
         return false;
