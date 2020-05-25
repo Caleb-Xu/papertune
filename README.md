@@ -49,27 +49,27 @@
 
 - 首页/本地音乐
 
-![首页](D:\MyCode\~Code\graduation-project\papertune\papertune-client\readme\首页.png)
+![首页](.\readme\首页.png)
 
 - 歌曲详情
 
-  ![歌曲详情](D:\MyCode\~Code\graduation-project\papertune\papertune-client\readme\歌曲详情.png)
+  ![歌曲详情](.\readme\歌曲详情.png)
 
 - 歌单详情
 
-  ![歌单详情](D:\MyCode\~Code\graduation-project\papertune\papertune-client\readme\歌单详情.png)
+  ![歌单详情](.\readme\歌单详情.png)
 
 - 个人页
 
-  ![个人页](D:\MyCode\~Code\graduation-project\papertune\papertune-client\readme\个人页.png)
+  ![个人页](.\readme\个人页.png)
 
 - 歌曲搜素页
 
-  ![搜索歌曲](D:\MyCode\~Code\graduation-project\papertune\papertune-client\readme\搜索歌曲.png)
+  ![搜索歌曲](.\readme\搜索歌曲.png)
 
 - 设置页
 
-  ![设置页](D:\MyCode\~Code\graduation-project\papertune\papertune-client\readme\设置页.png)
+  ![设置页](.\readme\设置页.png)
 
 
 
