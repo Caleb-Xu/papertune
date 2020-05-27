@@ -91,7 +91,7 @@ export default Vue.extend({
     selectLrc(time) {
       if (this.lrcs.length == 0) {
         return;
-      }
+      } 
       /**遍历 */
       if (
         this.lrcs.some((lrc, index) => {
