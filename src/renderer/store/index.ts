@@ -97,7 +97,7 @@ const options: StoreOptions<any> = {
     addMusic(state, payload: MusicListPayload) {
       console.log('addmusic');
       if (payload.lid != null || payload.name != null) {
-        (state.musicLists as Array<MusicList>).forEach((musiclist, index) => {
+        (state.musicLists as Array<MusicList>).some(musiclist => {
           if (musiclist.name == payload.name || musiclist.lid == payload.lid) {
             if (
               payload.music &&
@@ -110,7 +110,9 @@ const options: StoreOptions<any> = {
             } else {
               bus.$emit('showMsg', '音乐已存在于歌单中');
             }
+            return true;
           }
+          return false;
         });
       } else {
         console.warn('addmusic without name or lid');
@@ -119,7 +121,7 @@ const options: StoreOptions<any> = {
     },
     removeMusic(state, payload: MusicListPayload) {
       console.log('removemusic');
-      (state.musicLists as Array<MusicList>).forEach(musiclist => {
+      (state.musicLists as Array<MusicList>).some(musiclist => {
         if (musiclist.name == payload.name || musiclist.lid == payload.lid) {
           musiclist.list?.splice(
             findMusic(payload.music as Music, musiclist.list),
@@ -129,16 +131,20 @@ const options: StoreOptions<any> = {
           console.log('removed');
           // Vue.set(context.state.musicLists, index, musiclist);
           bus.$emit('showMsg', '音乐已从【' + musiclist.name + '】删除');
+          return true;
         }
+        return false;
       });
     },
     removeMusicList(state, payload: MusicListPayload) {
       if (payload.lid && payload.lid > 0) {
-        (state.musicLists as MusicList[]).forEach((musiclist, index) => {
+        (state.musicLists as MusicList[]).some((musiclist, index) => {
           if (musiclist.lid == payload.lid) {
             const [list] = (state.musicLists as MusicList[]).splice(index, 1);
             bus.$emit('showMsg', '【' + list.name + '】删除成功！');
+            return true;
           }
+          return false;
         });
       } else {
         console.warn('no lid in payload', payload.lid);

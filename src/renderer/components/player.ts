@@ -124,7 +124,12 @@ export default Vue.extend({
     },
   },
   methods: {
-    ...mapMutations(['go']),
+    go(index) {
+      this.$store.commit('go', index);
+      if (this.playList.playing == false) {
+        this.$set(this.playList, 'playing', true);
+      }
+    },
     getMusicPic,
     menu(e: MouseEvent) {
       /**唤起菜单 */

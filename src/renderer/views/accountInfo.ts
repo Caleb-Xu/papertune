@@ -151,10 +151,12 @@ export default Vue.extend({
       this.adding = false;
       this.editing = !this.editing;
       this.editingList = lid;
-      this.musicLists.forEach(musiclist => {
+      this.musicLists.some(musiclist => {
         if (musiclist.lid == lid) {
           this.newListName = musiclist.name;
+          return true;
         }
+        return false;
       });
 
       this.$nextTick(() => {
@@ -185,10 +187,12 @@ export default Vue.extend({
       const payload = {} as MusicListPayload;
       switch (index) {
         case 0:
-          this.musicLists.forEach(musiclist => {
+          this.musicLists.some(musiclist => {
             if (musiclist.lid == lid) {
               this.$store.commit('replaceMusicsToPlaylist', musiclist.list);
+              return true;
             }
+            return false;
           });
 
           break; //播放歌单
@@ -210,7 +214,7 @@ export default Vue.extend({
       this.newListName = '';
     },
     editListName(lid) {
-      this.musicLists.forEach(musiclist => {
+      this.musicLists.some(musiclist => {
         if (musiclist.lid == lid) {
           const payload: MusicListPayload = {
             act: SubmitType.EDIT,
@@ -218,7 +222,9 @@ export default Vue.extend({
             name: this.newListName,
           };
           this.$store.dispatch('modifyMusicList', payload);
+          return true;
         }
+        return false;
       });
     },
     async selectImage() {

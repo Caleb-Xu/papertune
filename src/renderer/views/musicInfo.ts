@@ -4,7 +4,7 @@ import { getMusicPic, getLyric } from 'utils/musicFile';
 import bus from '../bus';
 
 /**
- * todo 每次获取到连接类型的歌词时，将歌词内容存放到字段中，方便管理 
+ * todo 每次获取到连接类型的歌词时，将歌词内容存放到字段中，方便管理
  */
 
 /**歌词类 */
@@ -18,7 +18,7 @@ export default Vue.extend({
     return {
       pic: this._config.DEFAULT_MUSIC_PIC,
       lrcs: [] as Array<Lyric>,
-      current: 0,
+      current: 0, //当前歌词
       lineHeight: 30,
     };
   },
@@ -52,9 +52,6 @@ export default Vue.extend({
   },
   methods: {
     getMusicPic,
-    /**
-     * TODO 在拿到歌词后把歌词文本写入lrc字段，方便以后使用
-     */
     async getMusicLyric() {
       // /**测试 */
       // this.music.lrc =
@@ -92,14 +89,22 @@ export default Vue.extend({
     },
     /**选中歌词，滚动歌词通过watch实现 */
     selectLrc(time) {
-      // console.log('time', time);
-      /**暴力遍历 */
-      this.lrcs.forEach((lrc, index, lrcs) => {
-        if (time > lrc.time) {
-          if (index + 1 < lrcs.length && time < lrcs[index + 1].time)
-            this.current = index;
-        }
-      });
+      if (this.lrcs.length == 0) {
+        return;
+      }
+      /**遍历 */
+      if (
+        this.lrcs.some((lrc, index) => {
+          if (time < lrc.time) {
+            this.current = index - 1;
+            return true;
+          } else {
+            return false;
+          }
+        }) == false
+      ) {
+        this.current = this.lrcs.length - 1;
+      }
     },
   },
   async created() {
@@ -111,7 +116,7 @@ export default Vue.extend({
   mounted() {
     bus.$on('timeUpdate', this.selectLrc);
   },
-  beforeDestroy(){
+  beforeDestroy() {
     bus.$off('timeUpdate', this.selectLrc);
-  }
+  },
 });
