@@ -9,7 +9,7 @@ const routes: Array<RouteConfig> = [
     // path: '/localList',
     path: '/',
     name: 'index',
-    component: localList,
+    redirect:'/accountInfo'
   },
   {
     // path: '/localList',

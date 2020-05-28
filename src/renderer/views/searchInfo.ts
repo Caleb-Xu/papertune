@@ -71,6 +71,10 @@ export default Vue.extend({
       }
       this.musics = [];
       this.total = data.result.songCount;
+      if (this.total == 0) {
+        this.currentPage = 0;
+        return;
+      }
       const songs = data.result.songs as Array<any>;
       songs.forEach(song => {
         const music: Music = {
@@ -149,11 +153,16 @@ export default Vue.extend({
       const payload: MusicListPayload = {
         act: SubmitType.ADD,
         music: music,
-        lid: index
+        lid: index,
       };
       this.$store.dispatch('modifyMusicList', payload);
     },
     getData() {
+      if (this.keyword == null) {
+        this.currentPage = 0;
+        return;
+      }
+
       this._http
         .get('http://123.57.229.114:3000/search', { params: this.getParams })
         .then(resp => {
@@ -177,10 +186,10 @@ export default Vue.extend({
   created() {
     bus.$on('searchListReply', this.dealMenu);
     this.keyword = this.$route.query.keyword as string;
-    if (this.keyword == null) {
-      console.warn('empty keyword', this.keyword);
-      this.$router.push('/error');
-    }
+    // if (this.keyword == null) {
+    //   console.warn('empty keyword', this.keyword);
+    //   this.$router.push('/error');
+    // }
 
     this.getData();
   },

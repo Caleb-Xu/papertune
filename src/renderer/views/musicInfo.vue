@@ -53,10 +53,12 @@
 
   main {
     position: relative;
-    flex: 1;
+    // flex: 1;
     display: flex;
-    justify-content: center;
+    // justify-content: center;
     background: transparent;
+    width: 720px;
+    margin: 0 auto;
     $width = 300px;
 
     * {
@@ -64,7 +66,7 @@
     }
 
     >* {
-      width: 40%;
+      width: 50%;
     }
 
     #music-info-box {
@@ -78,7 +80,7 @@
         width: $width;
 
         #music-pic {
-          margin-top: 50px;
+          // margin-top: 50px;
           width: $width;
           height: $width;
           overflow: hidden;

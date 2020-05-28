@@ -29,7 +29,7 @@
       v-show="modalList['notice'].active"
       @close="closeModal"
     />
-    <modal
+    <!-- <modal
       :key="modalList['login'].id"
       v-bind="modalList['login'].option"
       name="login"
@@ -46,7 +46,7 @@
           <input type="password" v-model="password" id="login-pass" :pattern="passPattern" placeholder="请输入密码" />
         </div>
       </section>
-    </modal>
+    </modal> -->
   </div>
 </template>
 

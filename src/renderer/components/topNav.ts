@@ -47,7 +47,7 @@ export default Vue.extend({
     },
     /**回到主页 */
     back2Home(): void {
-      ///
+      this.$router.push('/');
     },
     /**
      * 关闭窗口
@@ -92,8 +92,12 @@ export default Vue.extend({
       }
     },
     /**最小化 */
-    minimizeBtn(): void {
-      ipcRenderer.send('minimizeWin');
+    min(): void {
+      ipcRenderer.send('min');
+    },
+     /**最小化 */
+     max(): void {
+      ipcRenderer.send('max');
     },
     /**搜索内容，触发搜索事件*/
     search() {

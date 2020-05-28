@@ -29,7 +29,7 @@
           v-if="musics.length>0"
           type="local"
         />
-        <div id="empty-msg" v-else>当前本地列表为空</div>
+        <div id="empty-msg" v-else>搜索结果为空</div>
       </section>
     </main>
   </div>
@@ -54,6 +54,9 @@ main {
       font-size: var(--xl);
       color: var(--important);
       margin-right: 10px;
+      max-width: 300px;
+      overflow: hidden;
+      white-space: nowrap;
     }
 
     #sub-title {

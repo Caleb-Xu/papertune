@@ -5,7 +5,7 @@
         <div id="title">应用设置</div>
       </header>
       <tab class="setting-tab" :activeTab="activeTab" :tabNames="tabNames">
-        <template v-slot:tab-0>
+        <template :slot="'tab-'+'路径相关'">
           <div class="setting-title">本地路径</div>
           <ul id="path-list" v-if="localPaths.length>0">
             <li class="path-item" v-for="(path,index) in localPaths" :key="path">
@@ -24,7 +24,7 @@
           </div>
           <!-- <button @click="selectFolder">test</button> -->
         </template>
-        <template v-slot:tab-1>
+        <template :slot="'tab-'+'个性外观'">
           <div class="setting-title">主题选择</div>
           <ul id="theme-list">
             <li
@@ -171,7 +171,7 @@
           opacity: 0.7;
 
           .current {
-            margin-left: 5px
+            margin-left: 5px;
           }
         }
       }

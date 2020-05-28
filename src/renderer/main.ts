@@ -9,16 +9,6 @@ import bus from '@/renderer/bus';
 
 Vue.config.productionTip = false;
 
-
-// axios.interceptors.request.use(function(config){
-//   console.warn("request config:",config);
-  
-//   // config.headers.Cookie = axiosApiCookie;
-//   return config;
-// },function(error){
-//   return Promise.reject(error);
-// });
-
 axios.defaults.withCredentials = true;
 
 Vue.prototype._http = axios;

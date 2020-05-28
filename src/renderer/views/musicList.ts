@@ -1,5 +1,4 @@
 import Vue from 'vue';
-import { getDB } from '../utils/tools';
 import { Music, MusicList, MusicListPayload, SubmitType } from '../utils/music';
 import { getMusicPic } from '../utils/musicFile';
 import bus from '../bus';
@@ -12,14 +11,16 @@ export default Vue.extend({
       lid: -1,
       pic: '',
       editingDesc: false,
-      newDesc: ''
+      newDesc: '',
     };
   },
   computed: {
-    bgStyle(): any{
+    bgStyle(): any {
       return {
-        'background-image': `url(${JSON.stringify(this.pic || this._config.DEFAULT_MUSIC_PIC)})`
-      }
+        'background-image': `url(${JSON.stringify(
+          this.pic || this._config.DEFAULT_MUSIC_PIC
+        )})`,
+      };
     },
     musicList(): MusicList {
       const musicLists = this.$store.state.musicLists as Array<MusicList>;
@@ -137,8 +138,12 @@ export default Vue.extend({
       bus.$emit('showMenu', this.menuOption);
     },
     playAll() {
-      this.$store.commit('replaceMusicsToPlaylist', this.musicList.list);
-      bus.$emit('showMsg', '正在播放 ' + this.musicList.name);
+      if (this.musicList.list.length > 0) {
+        this.$store.commit('replaceMusicsToPlaylist', this.musicList.list);
+        bus.$emit('showMsg', '正在播放 ' + this.musicList.name);
+      } else {
+        bus.$emit('showMsg', '当前歌单为空！');
+      }
     },
     dealMenu(index, listIndex: number, subIndex: number) {
       console.log('dealMenu', index, listIndex, subIndex);

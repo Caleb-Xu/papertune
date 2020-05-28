@@ -13,7 +13,9 @@ export default Vue.extend({
   data() {
     return {
       activeTab: 0,
-      tabNames: ['路径相关', '个性外观'],
+      tabNames: process.env.IS_ELECTRON
+        ? ['路径相关', '个性外观']
+        : ['个性外观'],
       themes: [
         { title: '鲜绿', key: 'green', color: '#43b244' },
         { title: '海棠红', key: 'red', color: '#f03752' },

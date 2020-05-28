@@ -45,7 +45,7 @@
       </header>
       <main>
         <tabs :tabNames="['我的歌单']">
-          <template v-slot:tab-0>
+          <template :slot="'tab-'+'我的歌单'">
             <ul id="music-lists">
               <li class="list" v-for="(list,index) in musicLists" :key="list.lid">
                 <div

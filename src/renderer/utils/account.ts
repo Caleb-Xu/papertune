@@ -28,6 +28,11 @@ export interface Account {
   updateTime?: number;
 }
 
+export const defaultAccount: Account = {
+  uid: 0,
+  name: '加载中',
+}
+
 /**同步到服务器的个人信息，整合了歌单信息 */
 export interface NetAccount {
   account: Account;

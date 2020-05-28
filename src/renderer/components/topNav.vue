@@ -43,12 +43,6 @@
     <ul id="right-button-group">
       <li class="btn-item"></li>
       <li class="btn-item">
-        <!-- <div
-          @click.stop="showDownloadTab"
-          data-type="downloadTab"
-          title="下载列表"
-          class="top-btn info-to-normal iconfont icon-icondownload"
-        />-->
       </li>
       <li class="btn-item"></li>
       <li class="btn-item">
@@ -67,15 +61,23 @@
           class="top-btn info-to-normal iconfont icon-category"
         />-->
       </li>
-      <li class="btn-item">
+      <li class="btn-item" v-if="!$store.state.isWeb">
         <div
-          @click="minimizeBtn"
+          @click="min"
           title="最小化"
           style="font-size:32px;"
           class="top-btn info-to-normal iconfont icon-moreunfold"
         />
       </li>
-      <li class="btn-item">
+      <li class="btn-item" v-if="!$store.state.isWeb">
+        <div
+          @click="max"
+          title="最大化"
+          style="font-size:32px;"
+          class="top-btn info-to-normal iconfont icon-less"
+        />
+      </li>
+      <li class="btn-item" v-if="!$store.state.isWeb">
         <div @click="close()" title="退出窗口" class="top-btn info-to-normal iconfont icon-close" />
       </li>
     </ul>

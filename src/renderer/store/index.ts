@@ -43,6 +43,7 @@ const options: StoreOptions<any> = {
       /**下载目录 */
       downloadPath: '',
       localPaths: [] as Array<string>,
+      isWeb: false
     };
   },
   getters: {

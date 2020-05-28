@@ -1,5 +1,5 @@
 <template>
-  <aside id="root">
+  <aside data-root>
     <section id="account-box" v-if="!_config.SINGLE && isOnline">
       <!-- <div v-if="netActive"> -->
       <div v-if="isLogin || !netActive" id="account-info">
@@ -13,19 +13,19 @@
           </a>
         </div>
       </div>
-      <div v-else id="login-or-register">
+      <!-- <div v-else id="login-or-register">
         <div id="login-link" @click="toPage('login')">未登录，请登录...</div>
         <a id="reg-link" @click="toPage('reg')">
           注册账号
           <span class="iconfont icon-more" />
         </a>
-      </div>
+      </div> -->
 
       <!-- <div v-else @click="toPage('account')">本地</div> -->
     </section>
 
     <main id="music-list-section">
-      <section id="my-music" class="music-list-box">
+      <section id="my-music" class="music-list-box" v-if="!$store.state.isWeb">
         <header>
           <div class="title">我的音乐</div>
         </header>
@@ -95,7 +95,7 @@
 <script src="./sidebar.ts"/>
 
 <style lang="stylus" scoped>
-#root {
+[data-root] {
   position: relative;
   z-index: 90;
   box-shadow: var(--shadow-hover);

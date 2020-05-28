@@ -1,5 +1,5 @@
 import Vue from 'vue';
-import { Account } from 'utils/account';
+import { Account, defaultAccount } from 'utils/account';
 import { MusicList, MusicListPayload, SubmitType, Music } from '../utils/music';
 import bus from '../bus';
 import { getMusicPic } from '../utils/musicFile';
@@ -31,10 +31,10 @@ export default Vue.extend({
     };
   },
   computed: {
-    bgStyle(): any{
+    bgStyle(): any {
       return {
-        'background-image': `url(${JSON.stringify(this.accountView.avatar)})`
-      }
+        'background-image': `url(${JSON.stringify(this.accountView.avatar)})`,
+      };
     },
     getMusicListMenuItems(): Array<MenuItem> {
       const _this = this;
@@ -59,7 +59,7 @@ export default Vue.extend({
       ];
     },
     account(): Account {
-      return this.$store.state.account;
+      return this.$store.state.account || defaultAccount;
     },
     avatarStyle(): any {
       return {
@@ -90,11 +90,10 @@ export default Vue.extend({
       this.editingName = false;
     },
     editedName() {
-      if (/^[a-zA-Z\u4e00-\u9fa5]/.test(this.newName)){
+      if (/^[a-zA-Z\u4e00-\u9fa5]/.test(this.newName)) {
         this.$set(this.account, 'name', this.newName);
         bus.$emit('showMsg', '修改用户名成功！');
-      }
-      else bus.$emit('showMsg', '命名不符合规范');
+      } else bus.$emit('showMsg', '命名不符合规范');
       this.editingName = false;
     },
     editDesc() {
@@ -239,10 +238,7 @@ export default Vue.extend({
     },
   },
   created() {
-    this.uid = +this.$route.query.uid;
-    if (!this.uid == null) {
-      console.warn('error uid', this.uid);
-    }
+    // this.uid = +this.$route?.query?.uid || 0;
     bus.$on('accountMusicListReply', this.menuReply);
   },
   mounted() {

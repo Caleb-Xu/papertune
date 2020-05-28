@@ -9,10 +9,23 @@ export default function(win: BrowserWindow) {
       console.log('closeWin');
       if (win) win.hide();
     })
-    .on('minimizeWin', e => {
+    .on('min', e => {
       //最小化
-      console.log('minimizeWin');
+      console.log('min');
       if (win) win.minimize();
+    })
+    .on('max', e => {
+      //最大化
+      console.log('max');
+      if (win) {
+        if (win.isMaximized()) {
+          // console.log('maxed')
+          win.unmaximize();
+        } else {
+          // console.log('unmaxed')
+          win.maximize();
+        }
+      }
     })
     .on('quit', e => {
       //退出，利用窗口关闭触发回调退出程序
@@ -36,10 +49,12 @@ export default function(win: BrowserWindow) {
     const result = await dialog.showOpenDialog(win, {
       buttonLabel: '确定',
       title: title || '选择图片',
-      filters: [{
-        extensions: ['png','jpg','jpeg'],
-        name: '图片'
-      }]
+      filters: [
+        {
+          extensions: ['png', 'jpg', 'jpeg'],
+          name: '图片',
+        },
+      ],
     });
     return result.filePaths[0];
   });

@@ -8,7 +8,6 @@ import {
 import initTray from './tray';
 import initIpc from './ipc';
 import config from '@/baseConfig';
-// import trayMenu from './menus/trayMenu';
 const isDevelopment = process.env.NODE_ENV !== 'production';
 
 // Keep a global reference of the window object, if you don't, the window will
@@ -33,7 +32,7 @@ function createMainWindow(win: BrowserWindow | null) {
     },
     show: false,
     backgroundColor: '#fff',
-    resizable: false,
+    resizable: true,
   });
   if (process.env.WEBPACK_DEV_SERVER_URL) {
     // Load the url of the dev server if in development mode

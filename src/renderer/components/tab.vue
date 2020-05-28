@@ -21,7 +21,7 @@
         class="tab-content"
         v-show="active==index"
       >
-        <slot :name="'tab-'+index">{{name}}</slot>
+        <slot :name="'tab-'+name">{{name}}</slot>
       </section>
     </section>
   </div>

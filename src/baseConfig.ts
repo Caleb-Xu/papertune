@@ -3,8 +3,16 @@
  */
 import { join } from 'path';
 /**无法被识别的静态文件目录 */
-//@ts-ignore
-const _static = __static;
+
+let _static;
+
+if (process.env.IS_ELECTRON) {
+  //@ts-ignore
+  _static = __static;
+} else {
+  _static = ''
+}
+
 /**默认的应用存储根目录 */
 /**prod */
 // const baseAppUrl = 'D://papertune';
@@ -27,16 +35,16 @@ export default {
   /**默认本地音乐目录，也是下载目录 */
   // DEFAULT_DOWNLOAD_PATH: join(baseAppUrl,'download/') ,
   /**测试数据 */
-  DEFAULT_DOWNLOAD_PATH: join(baseAppUrl,'download') ,
+  DEFAULT_DOWNLOAD_PATH: join(baseAppUrl, 'download'),
   /**默认本地缓存目录 */
-  DEFAULT_CACHE_MUSIC: join(baseAppUrl,'cache') ,
+  DEFAULT_CACHE_MUSIC: join(baseAppUrl, 'cache'),
   /**是否使用单机模式 */
   SINGLE: false,
   /**本地服务器或远程服务器 */
   /**dev */
-  SERVER_HOST:'http://localhost:4396/client',
+  SERVER_HOST: 'http://localhost:4396/client',
   /**prod */
   // SERVER_HOST:'http://domain:port',
   /**列表最大长度 */
-  LIST_MAX_LENGTH: 200
+  LIST_MAX_LENGTH: 200,
 };

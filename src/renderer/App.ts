@@ -281,9 +281,11 @@ export default Vue.extend({
           this.$store.commit('setPlayList', request.result);
           console.log('get playList finish', request.result);
           /**解析启动参数 */
-          this.getMusicArg().then(() => {
-            resolve();
-          });
+          if (process.env.IS_ELECTRON) {
+            this.getMusicArg().then(() => {
+              resolve();
+            });
+          }
         };
       });
     },
@@ -559,7 +561,7 @@ export default Vue.extend({
       /**以后可能还会有更多 */
     },
     /**监听键盘 */
-    keyup(e: KeyboardEvent) {
+    keydown(e: KeyboardEvent) {
       let node;
       switch (e.keyCode) {
         /**esc键，回车键，使表单元素失去焦点 */
@@ -570,28 +572,42 @@ export default Vue.extend({
             node.blur();
           }
           break;
+        case 123:
+          if (process.env.NODE_ENV !== 'development') {
+            e.preventDefault();
+          }
+          break;
       }
     },
   },
   created() {
+    this.$store.state.isWeb = !process.env.IS_ELECTRON;
     this.initCreated();
-    /**对应客户端内的退出选项 */
-    bus.$on('quit', async () => {
-      await this.saveIDB();
-      this.saveStorage();
-      ipcRenderer.send('quit');
-    });
-    /**对应托盘的退出选项 */
-    ipcRenderer.on('b4Quit', async () => {
-      await this.saveIDB();
-      this.saveStorage();
-      ipcRenderer.send('quit');
-    });
+
+    if (process.env.IS_ELECTRON) {
+      /**对应客户端内的退出选项 */
+      bus.$on('quit', async () => {
+        await this.saveIDB();
+        this.saveStorage();
+        ipcRenderer.send('quit');
+      });
+      /**对应托盘的退出选项 */
+      ipcRenderer.on('b4Quit', async () => {
+        await this.saveIDB();
+        this.saveStorage();
+        ipcRenderer.send('quit');
+      });
+    } else {
+      /**屏蔽右键菜单 */
+      document.oncontextmenu = () => {
+        return false;
+      };
+    }
 
     /**n分钟保存一次 */
     setTimeout(() => {
       setInterval(this.saveIDB, 1000 * 60 * 5);
-    }, 1000 * 60 * 5);
+    }, 1000 * 60 * (process.env.IS_ELECTRON ? 5 : 1));
 
     /**登录操作时启用 */
     bus.$on('initAccount', async data => {
@@ -605,15 +621,13 @@ export default Vue.extend({
       // this.initAccountData(db,account);
     });
 
-    /** 测试模块 */
-    test();
     // bus.$on('initAccount', resp.data);
   },
   mounted() {
     console.log('mounted');
 
     /**监听全局键盘 */
-    document.onkeyup = this.keyup;
+    document.onkeydown = this.keydown;
     /**初始化数据库
      * 异步操作，最后执行，避免程序卡死
      */
